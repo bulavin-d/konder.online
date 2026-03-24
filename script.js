@@ -194,6 +194,7 @@ function HeroCanvas() {
     this.time = 0;
     this.startTime = performance.now();
     this.titleShown = false;
+    this.heroVisible = true;
 }
 
 HeroCanvas.prototype.resize = function () {
@@ -207,8 +208,10 @@ HeroCanvas.prototype.resize = function () {
     this.canvas.style.height = this.h + 'px';
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    this.S = this.h / 800;
+    // Scale: fit 800x800 composition within BOTH width and height
+    this.S = Math.min(this.h / 800, this.w / 800);
     this.oX = (this.w - 800 * this.S) / 2;
+    this.oY = (this.h - 800 * this.S) / 2; // vertical offset if width-limited
 
     // Ribbons
     this.ribbons = [];
@@ -442,6 +445,8 @@ function easeOut(t) { return 1 - Math.pow(1 - Math.min(Math.max(t, 0), 1), 3); }
 
 HeroCanvas.prototype.animate = function (dt) {
     if (!this.canvas) return;
+    // Skip rendering entirely when hero is off screen (mobile perf)
+    if (!this.heroVisible && this.titleShown) return;
     var ctx = this.ctx, w = this.w, h = this.h;
     ctx.clearRect(0, 0, w, h);
 
@@ -475,8 +480,8 @@ HeroCanvas.prototype.animate = function (dt) {
     // Mountain fade
     this.drawMtnFade(fadeProg);
 
-    // Ridge ribbons
-    if (ridgeReady) {
+    // Ridge ribbons (only update when visible)
+    if (ridgeReady && this.heroVisible) {
         ctx.save();
         ctx.translate(this.oX, 0);
         ctx.globalCompositeOperation = 'screen';
@@ -491,8 +496,8 @@ HeroCanvas.prototype.animate = function (dt) {
     // AC unit
     this.drawAC(acProg);
 
-    // Out ribbons
-    if (outReady) {
+    // Out ribbons (only update when visible)
+    if (outReady && this.heroVisible) {
         ctx.save();
         ctx.translate(this.oX, 0);
         ctx.globalCompositeOperation = 'screen';
@@ -614,3 +619,12 @@ heroCanvas = new HeroCanvas();
 heroCanvas.resize();
 rafId = requestAnimationFrame(renderLoop);
 initReveal();
+
+// Pause ribbons when hero scrolled off screen
+(function () {
+    if (!heroCanvas || !heroCanvas.canvas) return;
+    var obs = new IntersectionObserver(function (entries) {
+        heroCanvas.heroVisible = entries[0].isIntersecting;
+    }, { threshold: 0.05 });
+    obs.observe(heroCanvas.section);
+})();

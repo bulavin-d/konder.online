@@ -606,7 +606,7 @@ svg {
 }
 
 .more-body.open {
-    max-height: 600px;
+    max-height: 2000px;
     opacity: 1;
     padding-top: 40px;
 }
@@ -797,7 +797,7 @@ svg {
 
 @media (max-width: 480px) {
     .hero-title {
-        font-size: clamp(36px, 13vw, 56px);
+        font-size: clamp(18px, 5.5vw, 32px);
     }
 
     .header-phone {

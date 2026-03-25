@@ -131,16 +131,19 @@ WindRibbon.prototype.reset = function (isInitial) {
         this.cp2Y   = this.endY - 100 * S;
 
     } else {
-        /* 'out' — cold air fans wide from vent */
-        this.startX = (260 + Math.random() * 280) * S;
-        this.startY = 560 * S + oY;
+        /* 'out' — cold air fans wide from vent slot
+           AC vent in composition coords:
+             x: 200…600  (vM=50 each side of 150…650)
+             y: ~553      (vY=544 + vH/2=9 → centre of the slot)     */
+        this.startX = (205 + Math.random() * 390) * S;
+        this.startY = 553 * S + oY;                /* ← vent centre, not below AC */
         var spread  = (this.startX / S - 400) * 1.2;
         this.endX   = this.startX + spread * S + (Math.random() - 0.5) * 60 * S;
-        this.endY   = 850 * S + oY;
+        this.endY   = 840 * S + oY;
         this.cp1X   = this.startX;
-        this.cp1Y   = 630 * S + oY;
+        this.cp1Y   = 620 * S + oY;
         this.cp2X   = this.endX - spread * 0.4 * S;
-        this.cp2Y   = 730 * S + oY;
+        this.cp2Y   = 720 * S + oY;
     }
 };
 

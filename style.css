@@ -157,6 +157,14 @@ svg {
     width: 100%;
     height: 100%;
     z-index: 1;
+    /* Prevent canvas from capturing touch events → no ribbon glitch on scroll */
+    touch-action: none;
+    pointer-events: none;
+}
+
+.hero {
+    /* Kill rubber-band overscroll that shifts canvas coordinates on iOS */
+    overscroll-behavior: none;
 }
 
 .hero-content {
@@ -164,8 +172,7 @@ svg {
     z-index: 10;
     text-align: center;
     width: 100%;
-    /* Fallback before JS sets exact pixel position via acCenterY */
-    top: 55%;
+    top: 55%; /* JS overrides this every frame to track AC body center */
     transform: translateY(-50%);
     padding: 0 24px;
     pointer-events: none;
@@ -324,6 +331,12 @@ svg {
 
 #trust .section-title {
     color: var(--white-pure);
+}
+
+/* Fix: subtitle was using default dark color on a dark background */
+#trust .section-sub {
+    color: var(--txt2-on-dark);
+    font-size: 1rem;
 }
 
 #trust .stat-card {

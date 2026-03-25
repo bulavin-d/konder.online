@@ -100,10 +100,10 @@ function WindRibbon(source, S, oY) {
 WindRibbon.prototype.reset = function (isInitial) {
     var S = this.S, oY = this.oY;
     this.t           = isInitial ? Math.random() : 0;
-    this.speed       = 0.002 + Math.random() * 0.003;
+    this.speed       = 0.003 + Math.random() * 0.005;         /* slightly faster */
     this.history     = [];
-    this.trailLength = Math.floor(70 + Math.random() * 40);   /* long trail = line, not blob */
-    this.lineWidth   = (0.8 + Math.random() * 0.7) * S;       /* thin: 0.8–1.5 × S */
+    this.trailLength = Math.floor(6 + Math.random() * 9);     /* short: 6-15 pts — ice crystal, not snake */
+    this.pSize       = (0.55 + Math.random() * 1.1) * S;      /* particle base size */
 
     if (this.source === 'left_ridge') {
         /* ── v13 coordinates — proven to look great ── */
@@ -162,33 +162,73 @@ WindRibbon.prototype.update = function (time) {
 
 WindRibbon.prototype.draw = function (ctx) {
     var h = this.history;
-    if (h.length < 3) return;
+    if (h.length < 1) return;
 
     /* Fade in/out at journey edges */
     var alpha = 1;
     if (this.t < 0.10) alpha = this.t / 0.10;
     if (this.t > 0.88) alpha = (1 - this.t) / 0.12;
 
+    var head = h[0];
+    var sz   = this.pSize;  /* base particle size */
+
     ctx.save();
-    ctx.lineCap  = 'round';
-    ctx.lineJoin = 'round';
 
-    /* ── KEY FIX: uniform stroke, NO gradient ──
-       Gradient bright-head→transparent-tail was the sperm shape.
-       Uniform thin line = wind streak, exactly like the icon.        */
-    ctx.strokeStyle = 'rgba(185, 232, 255, ' + (alpha * 0.48) + ')';
-    ctx.lineWidth   = this.lineWidth;
-
-    /* Smooth catmull-rom path through all history points */
-    ctx.beginPath();
-    ctx.moveTo(h[0].x, h[0].y);
-    for (var i = 0; i < h.length - 1; i++) {
-        var mx = (h[i].x + h[i+1].x) * 0.5;
-        var my = (h[i].y + h[i+1].y) * 0.5;
-        ctx.quadraticCurveTo(h[i].x, h[i].y, mx, my);
+    /* ── Short wispy vapour trail ──
+       Only a handful of segments, each fading rapidly toward the tail.
+       Looks like a faint breath of air, not a streak or a blob.        */
+    if (h.length > 1) {
+        var trailMax = Math.min(h.length, this.trailLength);
+        for (var i = 0; i < trailMax - 1; i++) {
+            var frac = 1 - (i / trailMax);
+            var ta   = alpha * frac * frac * 0.22;
+            ctx.strokeStyle = 'rgba(210, 242, 255, ' + ta + ')';
+            ctx.lineWidth   = Math.max(0.3, sz * frac * 0.85);
+            ctx.lineCap     = 'round';
+            ctx.beginPath();
+            ctx.moveTo(h[i].x,     h[i].y);
+            ctx.lineTo(h[i+1].x,   h[i+1].y);
+            ctx.stroke();
+        }
     }
-    ctx.lineTo(h[h.length-1].x, h[h.length-1].y);
-    ctx.stroke();
+
+    /* ── Ice-crystal head ──
+       Marketing concept: "воздух прямо с хребтов гор" —
+       so each particle looks like a tiny airborne ice crystal:
+       bright glowing core + soft ethereal halo + sparkle cross arms.   */
+    var r = sz * 2.4;
+
+    /* Soft outer halo — like the glow of ice in sunlight */
+    var grd = ctx.createRadialGradient(head.x, head.y, 0, head.x, head.y, r * 3.2);
+    grd.addColorStop(0,    'rgba(235, 252, 255, ' + (alpha * 0.50) + ')');
+    grd.addColorStop(0.40, 'rgba(175, 228, 255, ' + (alpha * 0.16) + ')');
+    grd.addColorStop(1,    'rgba(140, 210, 255, 0)');
+    ctx.fillStyle = grd;
+    ctx.beginPath();
+    ctx.arc(head.x, head.y, r * 3.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* Bright crystalline core */
+    ctx.fillStyle = 'rgba(255, 255, 255, ' + (alpha * 0.95) + ')';
+    ctx.beginPath();
+    ctx.arc(head.x, head.y, r * 0.36, 0, Math.PI * 2);
+    ctx.fill();
+
+    /* Sparkle cross arms — only on bigger particles, keeps density natural */
+    if (sz > 0.75 * this.S) {
+        var arm = r * 1.05;
+        ctx.strokeStyle = 'rgba(255, 255, 255, ' + (alpha * 0.52) + ')';
+        ctx.lineWidth   = Math.max(0.35, sz * 0.32);
+        ctx.lineCap     = 'round';
+        ctx.beginPath(); ctx.moveTo(head.x - arm, head.y); ctx.lineTo(head.x + arm, head.y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(head.x, head.y - arm); ctx.lineTo(head.x, head.y + arm); ctx.stroke();
+        /* 45° secondary arms — half-length, makes it a proper 8-point snowflake speck */
+        var arm2 = arm * 0.6;
+        ctx.strokeStyle = 'rgba(255, 255, 255, ' + (alpha * 0.28) + ')';
+        ctx.beginPath(); ctx.moveTo(head.x - arm2, head.y - arm2); ctx.lineTo(head.x + arm2, head.y + arm2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(head.x + arm2, head.y - arm2); ctx.lineTo(head.x - arm2, head.y + arm2); ctx.stroke();
+    }
+
     ctx.restore();
 };
 
@@ -229,10 +269,10 @@ HeroCanvas.prototype.resize = function () {
 
        On desktop landscape: h*0.82/800 ≈ 0.82, w/500 ≈ 2.4+ → height wins ✓
        On iPhone 390×844:    h*0.82/800 = 0.865, w/500 = 0.78 → width wins ✓
-         → S = 0.78, AC width = 500*0.78 = 390px = perfect fit
-         → mountains height = 800*0.78 = 624px covers most of screen ✓
+         → Apply 0.86 factor on narrow screens so AC has side breathing room.
     ─────────────────────────────────────────────────────────────── */
-    this.S  = Math.min(this.h * 0.82 / 800, this.w / 500);
+    var wFit = this.w < 600 ? this.w * 0.86 : this.w;
+    this.S  = Math.min(this.h * 0.82 / 800, wFit / 500);
     this.oX = (this.w - 800 * this.S) / 2;
     /* anchor composition bottom to canvas bottom */
     var naturalOY = this.h - 800 * this.S;

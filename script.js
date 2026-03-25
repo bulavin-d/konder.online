@@ -1,16 +1,15 @@
 /* =============================================
-   KONDER.ONLINE — script.js v15
-   - Thin elegant wind lines (no more fat ribbons)
-   - Correct air flow: mountains → AC intake → out of vent
-   - Portrait mobile: S scales to HEIGHT so mountains fill screen
-   - Touch scroll glitch fixed (overscroll, rAF guard)
+   KONDER.ONLINE — script.js v16
+   - Reverted to v13 ridge paths (they were correct)
+   - Fixed draw(): uniform thin line, NO gradient = no sperm
+   - Portrait mobile: AC fits screen width via capped S
    ============================================= */
 
 var rafId    = null;
 var lastTime = performance.now();
 
 // ============================================================
-//  1. HEADER — scroll effect
+//  1. HEADER
 // ============================================================
 (function () {
     var h = document.getElementById('header');
@@ -20,14 +19,13 @@ var lastTime = performance.now();
 })();
 
 // ============================================================
-//  2. LOGO CANVAS — mini animated logo in header
+//  2. LOGO CANVAS
 // ============================================================
 (function () {
     var c = document.getElementById('logo-canvas');
     if (!c) return;
     var lctx = c.getContext('2d');
-    var W = c.width, H = c.height;
-    var logoTime = 0;
+    var W = c.width, H = c.height, logoTime = 0;
 
     function drawLogoBg() {
         var g = lctx.createRadialGradient(W/2,H/2,0,W/2,H/2,W*0.7);
@@ -73,22 +71,25 @@ var lastTime = performance.now();
 })();
 
 // ============================================================
-//  3. HERO CANVAS — Mountains + AC + Air Streams + Stars
+//  3. HERO CANVAS
 // ============================================================
 var heroCanvas = null;
 
-/* ─────────────────────────────────────────────────────────────
-   WindStream — thin, elegant air lines (like the wind icon)
+/* ──────────────────────────────────────────────────────────
+   WindRibbon — thin continuous line, no gradient sperm effect
 
-   Concept: "The same fresh mountain air — inside your home"
-   • 'in_left'  : flows FROM left mountain slopes → INTO AC intake
-   • 'in_right' : flows FROM right mountain slopes → INTO AC intake
-   • 'out'      : blows OUT of AC vent, fanning downward/sideways
+   Rendering principle:
+   • NO head-to-tail gradient (that's what made it look like sperm)
+   • Uniform thin stroke with constant alpha
+   • Long trail → looks like a flowing line, not a blob
+   • Paths revert to v13 coordinates — those swept nicely off ridges
 
-   Visual style: thin single-pixel-ish lines, smooth catmull-rom,
-   slight undulation — matching the provided wind icon aesthetic.
-───────────────────────────────────────────────────────────── */
-function WindStream(source, S, oY) {
+   Sources:
+   • 'left_ridge'  — air lifts off left mountain, curves into AC
+   • 'right_ridge' — mirror of left
+   • 'out'         — icy air fans out from AC vent
+────────────────────────────────────────────────────────── */
+function WindRibbon(source, S, oY) {
     this.source  = source;
     this.S       = S;
     this.oY      = oY || 0;
@@ -96,98 +97,89 @@ function WindStream(source, S, oY) {
     this.reset(true);
 }
 
-WindStream.prototype.reset = function (isInitial) {
+WindRibbon.prototype.reset = function (isInitial) {
     var S = this.S, oY = this.oY;
     this.t           = isInitial ? Math.random() : 0;
+    this.speed       = 0.002 + Math.random() * 0.003;
     this.history     = [];
+    this.trailLength = Math.floor(70 + Math.random() * 40);   /* long trail = line, not blob */
+    this.lineWidth   = (0.8 + Math.random() * 0.7) * S;       /* thin: 0.8–1.5 × S */
 
-    if (this.source === 'in_left') {
-        /* Air gathered off left-mountain ridge, swept into AC top/left */
-        this.speed       = 0.0012 + Math.random() * 0.0014;
-        this.trailLength = Math.floor(50 + Math.random() * 30);
-        this.lineWidth   = (0.8 + Math.random() * 0.9) * S;
-
+    if (this.source === 'left_ridge') {
+        /* ── v13 coordinates — proven to look great ── */
         var lerp = Math.random();
-        /* Start: somewhere along the left-mountain slope */
-        this.startX = (210 + lerp * 130) * S;
-        this.startY = (230 + lerp * 80)  * S + oY;
-        /* End: near the AC body — top-center area */
-        this.endX   = (220 + Math.random() * 180) * S;
-        this.endY   = (438 + Math.random() * 30)  * S + oY;
-        /* Control points: sweep in a wide concave arc — no sharp angles */
-        this.cp1X   = this.startX - (20 + Math.random() * 40) * S;
-        this.cp1Y   = this.startY + (60 + Math.random() * 50) * S;
-        this.cp2X   = this.endX   - (30 + Math.random() * 50) * S;
-        this.cp2Y   = this.endY   - (80 + Math.random() * 40) * S;
+        this.startX = (280 + lerp * 80) * S;
+        this.startY = (220 + lerp * 70) * S + oY;
+        this.endX   = (260 + Math.random() * 120) * S;
+        this.endY   = 440 * S + oY;
+        /* cp1 goes RIGHT & slightly UP off the ridge — lift-off feel */
+        this.cp1X   = this.startX + 60 * S;
+        this.cp1Y   = this.startY - 30 * S;
+        this.cp2X   = this.endX - 20 * S;
+        this.cp2Y   = this.endY - 100 * S;
 
-    } else if (this.source === 'in_right') {
-        /* Mirror: air off right mountain, sweeps left into AC */
-        this.speed       = 0.0012 + Math.random() * 0.0014;
-        this.trailLength = Math.floor(50 + Math.random() * 30);
-        this.lineWidth   = (0.8 + Math.random() * 0.9) * S;
-
+    } else if (this.source === 'right_ridge') {
         var lerp2 = Math.random();
-        this.startX = (490 + lerp2 * 100) * S;
-        this.startY = (250 + lerp2 * 60)  * S + oY;
-        this.endX   = (400 + Math.random() * 190) * S;
-        this.endY   = (438 + Math.random() * 30)  * S + oY;
-        this.cp1X   = this.startX + (20 + Math.random() * 40) * S;
-        this.cp1Y   = this.startY + (60 + Math.random() * 50) * S;
-        this.cp2X   = this.endX   + (30 + Math.random() * 50) * S;
-        this.cp2Y   = this.endY   - (80 + Math.random() * 40) * S;
+        this.startX = (560 - lerp2 * 60) * S;
+        this.startY = (260 + lerp2 * 50) * S + oY;
+        this.endX   = (420 + Math.random() * 120) * S;
+        this.endY   = 440 * S + oY;
+        /* cp1 goes LEFT & slightly UP */
+        this.cp1X   = this.startX - 60 * S;
+        this.cp1Y   = this.startY - 30 * S;
+        this.cp2X   = this.endX + 20 * S;
+        this.cp2Y   = this.endY - 100 * S;
 
     } else {
-        /* 'out' — cold air ejected from vent, fans wide and soft */
-        this.speed       = 0.0014 + Math.random() * 0.0018;
-        this.trailLength = Math.floor(55 + Math.random() * 35);
-        this.lineWidth   = (0.7 + Math.random() * 0.8) * S;
-
-        var xPos  = 260 + Math.random() * 280;   /* across the vent width */
-        var dx    = (xPos - 400) * 2.8;           /* diverge from center */
-        var swirl = (Math.random() - 0.5) * 120;
-
-        this.startX = xPos * S;
-        this.startY = (568 + Math.random() * 10) * S + oY;
-        this.endX   = (xPos + dx + swirl) * S;
-        this.endY   = (700 + Math.random() * 80)  * S + oY;
-        /* Lazy S-curve — strong horizontal spread, gentle vertical drop */
-        this.cp1X   = (xPos + dx * 0.15 + (Math.random()-0.5)*60) * S;
-        this.cp1Y   = (600  + Math.random() * 20) * S + oY;
-        this.cp2X   = (xPos + dx * 0.70 + (Math.random()-0.5)*80) * S;
-        this.cp2Y   = (655  + Math.random() * 30) * S + oY;
+        /* 'out' — cold air fans wide from vent */
+        this.startX = (260 + Math.random() * 280) * S;
+        this.startY = 560 * S + oY;
+        var spread  = (this.startX / S - 400) * 1.2;
+        this.endX   = this.startX + spread * S + (Math.random() - 0.5) * 60 * S;
+        this.endY   = 850 * S + oY;
+        this.cp1X   = this.startX;
+        this.cp1Y   = 630 * S + oY;
+        this.cp2X   = this.endX - spread * 0.4 * S;
+        this.cp2Y   = 730 * S + oY;
     }
 };
 
-WindStream.prototype.getPoint = function (time) {
+WindRibbon.prototype.getPoint = function (time) {
     var t=this.t, u=1-t, tt=t*t, uu=u*u;
     var x = uu*u*this.startX + 3*uu*t*this.cp1X + 3*u*tt*this.cp2X + tt*t*this.endX;
     var y = uu*u*this.startY + 3*uu*t*this.cp1Y + 3*u*tt*this.cp2Y + tt*t*this.endY;
-    /* Gentle horizontal undulation only — no vertical jitter */
-    x += Math.sin(time * 1.8 + t * Math.PI * 4.0) * 3.5 * this.S;
+    /* horizontal-only wiggle, same amplitude as v13 */
+    x += Math.sin(time * 3 + y * 0.015) * 3 * this.S;
     return { x:x, y:y };
 };
 
-WindStream.prototype.update = function (time) {
+WindRibbon.prototype.update = function (time) {
     this.t += this.speed;
     if (this.t > 1) { this.reset(false); return; }
     this.history.unshift(this.getPoint(time));
     if (this.history.length > this.trailLength) this.history.pop();
 };
 
-WindStream.prototype.draw = function (ctx) {
+WindRibbon.prototype.draw = function (ctx) {
     var h = this.history;
     if (h.length < 3) return;
 
-    /* Fade in at start, fade out at end of journey */
+    /* Fade in/out at journey edges */
     var alpha = 1;
     if (this.t < 0.10) alpha = this.t / 0.10;
-    if (this.t > 0.85) alpha = (1 - this.t) / 0.15;
+    if (this.t > 0.88) alpha = (1 - this.t) / 0.12;
 
     ctx.save();
     ctx.lineCap  = 'round';
     ctx.lineJoin = 'round';
 
-    /* Smooth path via midpoint catmull-rom */
+    /* ── KEY FIX: uniform stroke, NO gradient ──
+       Gradient bright-head→transparent-tail was the sperm shape.
+       Uniform thin line = wind streak, exactly like the icon.        */
+    ctx.strokeStyle = 'rgba(185, 232, 255, ' + (alpha * 0.48) + ')';
+    ctx.lineWidth   = this.lineWidth;
+
+    /* Smooth catmull-rom path through all history points */
     ctx.beginPath();
     ctx.moveTo(h[0].x, h[0].y);
     for (var i = 0; i < h.length - 1; i++) {
@@ -196,90 +188,66 @@ WindStream.prototype.draw = function (ctx) {
         ctx.quadraticCurveTo(h[i].x, h[i].y, mx, my);
     }
     ctx.lineTo(h[h.length-1].x, h[h.length-1].y);
-
-    /* Gradient: bright head → transparent tail */
-    var p0 = h[0], pN = h[h.length-1];
-    var gdx = pN.x - p0.x, gdy = pN.y - p0.y;
-    if (Math.abs(gdx) + Math.abs(gdy) < 0.5) { ctx.restore(); return; }
-    var grad = ctx.createLinearGradient(p0.x, p0.y, pN.x, pN.y);
-    /* 'in' streams are slightly warmer blue; 'out' streams are cooler/icy */
-    if (this.source !== 'out') {
-        grad.addColorStop(0,    'rgba(180, 225, 255, ' + (alpha * 0.85) + ')');
-        grad.addColorStop(0.35, 'rgba(160, 210, 255, ' + (alpha * 0.35) + ')');
-        grad.addColorStop(1,    'rgba(140, 200, 255, 0)');
-    } else {
-        grad.addColorStop(0,    'rgba(210, 245, 255, ' + (alpha * 0.90) + ')');
-        grad.addColorStop(0.35, 'rgba(185, 235, 255, ' + (alpha * 0.35) + ')');
-        grad.addColorStop(1,    'rgba(165, 225, 255, 0)');
-    }
-    ctx.strokeStyle = grad;
-    ctx.lineWidth   = this.lineWidth;
     ctx.stroke();
     ctx.restore();
 };
 
-// ─────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────
 //  HeroCanvas
-// ─────────────────────────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────
 function HeroCanvas() {
-    this.canvas  = document.getElementById('hero-canvas');
+    this.canvas      = document.getElementById('hero-canvas');
     if (!this.canvas) return;
-    this.section = this.canvas.parentElement;
-    this.ctx     = this.canvas.getContext('2d');
-    this.streams  = [];
-    this.stars    = [];
-    this.w = 0; this.h = 0;
-    this.S = 1; this.oX = 0; this.oY = 0;
+    this.section     = this.canvas.parentElement;
+    this.ctx         = this.canvas.getContext('2d');
+    this.ribbons     = [];
+    this.stars       = [];
+    this.w=0; this.h=0; this.S=1; this.oX=0; this.oY=0;
     this.acCenterY   = 0;
     this.time        = 0;
     this.startTime   = performance.now();
     this.titleShown  = false;
     this.heroVisible = true;
-    this._scrolling  = false;
 }
 
 HeroCanvas.prototype.resize = function () {
     if (!this.canvas) return;
-    var dpr  = Math.min(window.devicePixelRatio || 1, 2);
-    this.w   = this.section.offsetWidth;
-    this.h   = this.section.offsetHeight;
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    this.w  = this.section.offsetWidth;
+    this.h  = this.section.offsetHeight;
     this.canvas.width  = this.w * dpr;
     this.canvas.height = this.h * dpr;
     this.canvas.style.width  = this.w + 'px';
     this.canvas.style.height = this.h + 'px';
     this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    /* ── Scale strategy ────────────────────────────────────────
-       Portrait (mobile) : S = h/800  → composition fills screen HEIGHT
-                           oY = 0     → mountains anchor to canvas bottom
-                           oX centers the 800-wide composition (may clip
-                           slightly on narrow screens, that's fine — the
-                           important elements, mountains + AC, are centered)
+    /* ── Scale strategy ─────────────────────────────────────────────
+       The 800×800 composition has the AC spanning x=150…650 (500 units).
+       For it to fit the screen: S ≤ w / 500.
+       We also want mountains tall: S ≤ h * 0.82 / 800.
+       Take the min so BOTH constraints are satisfied on any device.
 
-       Landscape / Desktop: S = min(h/800, w/800), oY ≥ 0 as before
-    ──────────────────────────────────────────────────────────── */
-    var isPortrait = this.h > this.w;
-    if (isPortrait) {
-        this.S  = this.h / 800;
-        this.oX = (this.w - 800 * this.S) / 2;
-        this.oY = 0;
-    } else {
-        this.S  = Math.min(this.h / 800, this.w / 800);
-        this.oX = (this.w - 800 * this.S) / 2;
-        var naturalOY = this.h - 800 * this.S;
-        this.oY = Math.min(Math.max(naturalOY, 0), this.h * 0.40);
-    }
+       On desktop landscape: h*0.82/800 ≈ 0.82, w/500 ≈ 2.4+ → height wins ✓
+       On iPhone 390×844:    h*0.82/800 = 0.865, w/500 = 0.78 → width wins ✓
+         → S = 0.78, AC width = 500*0.78 = 390px = perfect fit
+         → mountains height = 800*0.78 = 624px covers most of screen ✓
+    ─────────────────────────────────────────────────────────────── */
+    this.S  = Math.min(this.h * 0.82 / 800, this.w / 500);
+    this.oX = (this.w - 800 * this.S) / 2;
+    /* anchor composition bottom to canvas bottom */
+    var naturalOY = this.h - 800 * this.S;
+    this.oY = Math.max(naturalOY, 0);
 
-    /* Build streams with updated S and oY */
-    this.streams = [];
+    /* Ribbons */
+    this.ribbons = [];
     var S = this.S, oY = this.oY;
-    for (var i=0; i<16; i++) this.streams.push(new WindStream('in_left',  S, oY));
-    for (var j=0; j<16; j++) this.streams.push(new WindStream('in_right', S, oY));
-    for (var k=0; k<28; k++) this.streams.push(new WindStream('out',      S, oY));
+    for (var i=0; i<18; i++) this.ribbons.push(new WindRibbon('left_ridge',  S, oY));
+    for (var j=0; j<18; j++) this.ribbons.push(new WindRibbon('right_ridge', S, oY));
+    for (var k=0; k<30; k++) this.ribbons.push(new WindRibbon('out',         S, oY));
 
-    /* Stars in sky region */
+    /* Stars — upper region */
     this.stars = [];
-    var skyH  = isPortrait ? this.h * 0.38 : Math.max(this.oY + 200*this.S, this.h * 0.35);
+    var skyH  = Math.max(this.oY + 180*this.S, this.h * 0.32);
     var count = Math.min(Math.floor(this.w * skyH / 13000), 42);
     for (var s=0; s<count; s++) {
         this.stars.push({
@@ -319,14 +287,11 @@ HeroCanvas.prototype.drawStars = function () {
     }
 };
 
-/* Mountain rendering — oY anchors peaks relative to canvas bottom */
 HeroCanvas.prototype.drawMountain = function (peakX,peakY,leftX,rightX,colorL,colorD,snowDepth,progress) {
     var ctx=this.ctx, S=this.S, oX=this.oX, oY=this.oY;
     var baseY  = this.h + 10;
     var mtnH   = 800 - peakY;
-    var px     = peakX*S + oX;
-    var lx     = leftX*S  + oX;
-    var rx     = rightX*S + oX;
+    var px=peakX*S+oX, lx=leftX*S+oX, rx=rightX*S+oX;
     var tPY    = peakY*S + oY;
     var animPY = baseY + (tPY - baseY) * progress;
 
@@ -338,11 +303,11 @@ HeroCanvas.prototype.drawMountain = function (peakX,peakY,leftX,rightX,colorL,co
     if(progress>0.7){
         var sa=(progress-0.7)/0.3;
         ctx.save(); ctx.globalAlpha=sa;
-        var ratio      = snowDepth/mtnH;
-        var snowLX     = peakX + ratio*(leftX  - peakX);
-        var snowRX     = peakX + ratio*(rightX - peakX);
-        var snowBotScr = (peakY+snowDepth)*S + oY;
-        var animSnow   = baseY + (snowBotScr - baseY) * progress;
+        var ratio=snowDepth/mtnH;
+        var snowLX=peakX+ratio*(leftX-peakX);
+        var snowRX=peakX+ratio*(rightX-peakX);
+        var snowBotScr=(peakY+snowDepth)*S+oY;
+        var animSnow=baseY+(snowBotScr-baseY)*progress;
         ctx.fillStyle='#FFFFFF';
         ctx.beginPath(); ctx.moveTo(px,animPY); ctx.lineTo(snowLX*S+oX,animSnow); ctx.lineTo(px,animSnow); ctx.fill();
         ctx.fillStyle='#AECDF5';
@@ -354,8 +319,8 @@ HeroCanvas.prototype.drawMountain = function (peakX,peakY,leftX,rightX,colorL,co
 HeroCanvas.prototype.drawMtnFade = function (progress) {
     if(progress<=0) return;
     var ctx=this.ctx, w=this.w, h=this.h;
-    var fadeTop = 400*this.S + this.oY;
-    var g = ctx.createLinearGradient(0,fadeTop,0,h);
+    var fadeTop=400*this.S+this.oY;
+    var g=ctx.createLinearGradient(0,fadeTop,0,h);
     g.addColorStop(0,'rgba(5,20,45,0)');
     g.addColorStop(1,'rgba(5,20,45,'+progress+')');
     ctx.fillStyle=g; ctx.fillRect(0,fadeTop,w,h-fadeTop);
@@ -364,14 +329,11 @@ HeroCanvas.prototype.drawMtnFade = function (progress) {
 HeroCanvas.prototype.drawAC = function (progress) {
     if(progress<=0) return;
     var ctx=this.ctx, S=this.S, oX=this.oX, oY=this.oY;
-    var acX       = 150*S + oX;
-    var acW       = 500*S;
-    var acH       = 140*S;
-    var acR       = 25*S;
-    var acTargetY = 430*S + oY;
-    var acY       = acTargetY + (1-progress)*50*S;
+    var acX=150*S+oX, acW=500*S, acH=140*S, acR=25*S;
+    var acTargetY=430*S+oY;
+    var acY=acTargetY+(1-progress)*50*S;
 
-    this.acCenterY = acY + acH/2;
+    this.acCenterY=acY+acH/2;
 
     ctx.save(); ctx.globalAlpha=progress;
     ctx.shadowColor='rgba(0,10,30,0.7)'; ctx.shadowBlur=20*S; ctx.shadowOffsetY=12*S;
@@ -420,20 +382,19 @@ function easeOut(t){return 1-Math.pow(1-Math.min(Math.max(t,0),1),3);}
 
 HeroCanvas.prototype.animate = function (dt) {
     if(!this.canvas) return;
-    /* Skip when off screen AND title already shown (perf) */
     if(!this.heroVisible && this.titleShown) return;
 
     var ctx=this.ctx, w=this.w, h=this.h;
     ctx.clearRect(0,0,w,h);
-    this.time += 0.016;
+    this.time+=0.016;
 
-    var elapsed    = (performance.now() - this.startTime)/1000;
+    var elapsed    = (performance.now()-this.startTime)/1000;
     var bgAlpha    = easeOut(elapsed/0.5);
     var mtnProg    = easeOut((elapsed-0.3)/1.2);
     var fadeProg   = easeOut((elapsed-1.2)/0.6);
     var acProg     = easeOut((elapsed-1.5)/0.8);
-    var inReady    = elapsed > 1.0;   /* mountain→AC streams */
-    var outReady   = elapsed > 2.2;   /* AC→out streams */
+    var ridgeReady = elapsed > 1.0;
+    var outReady   = elapsed > 2.2;
 
     ctx.save(); ctx.globalAlpha=bgAlpha; this.drawBg(); ctx.restore();
 
@@ -446,12 +407,11 @@ HeroCanvas.prototype.animate = function (dt) {
     this.drawMountain(280,220,-300, 754,'#1E63C2','#123D78',70,mtnProg);
     this.drawMtnFade(fadeProg);
 
-    /* IN streams: mountain ridges → AC intake */
-    if(inReady && this.heroVisible){
+    if(ridgeReady && this.heroVisible){
         ctx.save(); ctx.translate(this.oX,0);
         ctx.globalCompositeOperation='screen';
-        for(var i=0;i<this.streams.length;i++){
-            var r=this.streams[i];
+        for(var i=0;i<this.ribbons.length;i++){
+            var r=this.ribbons[i];
             if(r.source!=='out'){ r.update(this.time); r.draw(ctx); }
         }
         ctx.globalCompositeOperation='source-over'; ctx.restore();
@@ -459,18 +419,17 @@ HeroCanvas.prototype.animate = function (dt) {
 
     this.drawAC(acProg);
 
-    /* OUT streams: AC vent → room */
     if(outReady && this.heroVisible){
         ctx.save(); ctx.translate(this.oX,0);
         ctx.globalCompositeOperation='screen';
-        for(var j=0;j<this.streams.length;j++){
-            var r2=this.streams[j];
+        for(var j=0;j<this.ribbons.length;j++){
+            var r2=this.ribbons[j];
             if(r2.source==='out'){ r2.update(this.time); r2.draw(ctx); }
         }
         ctx.globalCompositeOperation='source-over'; ctx.restore();
     }
 
-    /* Keep .hero-content centred on the AC body */
+    /* Keep title centred on AC body */
     if(acProg>0.05 && this.acCenterY>0){
         var wrap=document.querySelector('.hero-content');
         if(wrap) wrap.style.top=this.acCenterY+'px';
@@ -577,15 +536,13 @@ window.addEventListener('resize',function(){
     },300);
 },{passive:true});
 
-// ============================================================
-//  INIT
-// ============================================================
+// INIT
 heroCanvas=new HeroCanvas();
 heroCanvas.resize();
 rafId=requestAnimationFrame(renderLoop);
 initReveal();
 
-/* Pause streams when hero is scrolled off screen */
+/* Pause ribbons when hero off screen */
 (function(){
     if(!heroCanvas||!heroCanvas.canvas) return;
     var obs=new IntersectionObserver(function(entries){

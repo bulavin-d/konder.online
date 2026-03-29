@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KONDER.ONLINE — BOSS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg: #051224;
+            --box: rgba(10, 22, 40, 0.85);
+            --border: rgba(77, 168, 240, 0.2);
+            --blue: #3b9eed;
+            --text: #e6edf8;
+            --text-muted: #8cafd2;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background: var(--box);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            font-size: 24px;
+            margin: 0 0 24px 0;
+            text-align: center;
+            color: #fff;
+        }
+
+        .group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            border-radius: 10px;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            border-color: var(--blue);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            background: linear-gradient(135deg, var(--blue), #2b7acc);
+            color: #fff;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            filter: brightness(1.1);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .log-btn {
+            background: rgba(255, 255, 255, 0.1);
+            margin-top: 10px;
+        }
+
+        /* Dashboard */
+        #dashboard {
+            display: none;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+
+        .user-info {
+            margin-bottom: 16px;
+        }
+
+        .user-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+
+        .user-balance {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--blue);
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-green {
+            background: #28a745;
+        }
+
+        .btn-red {
+            background: #dc3545;
+        }
+
+        /* Toggle */
+        .promo-switch {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .promo-switch span {
+            font-weight: 600;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #334;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: var(--blue);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(22px);
+        }
+
+        #error-msg {
+            color: #ff5e5e;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1 id="page-title">Авторизация BOSS</h1>
+
+        <!-- AUTH -->
+        <div id="auth-section">
+            <form id="login-form">
+                <div class="group">
+                    <label>Админ Email</label>
+                    <input type="email" id="a-email" required>
+                </div>
+                <div class="group">
+                    <label>Пароль</label>
+                    <input type="password" id="a-pass" required>
+                </div>
+                <button type="submit" id="btn-login">Войти в админку</button>
+            </form>
+            <p id="error-msg"></p>
+        </div>
+
+        <!-- DASHBOARD -->
+        <div id="dashboard">
+
+            <div class="promo-switch">
+                <span>Акция 2000₸ (Попап)</span>
+                <label class="switch">
+                    <input type="checkbox" id="promo-toggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="group">
+                <label>Поиск по телефону</label>
+                <input type="text" id="search-phone" placeholder="Например: 777" autocomplete="off">
+            </div>
+
+            <div id="results"></div>
+
+            <button class="log-btn" id="btn-logout">Выйти</button>
+        </div>
+    </div>
+
+    <script src="boss.js"></script>
+</body>
+
+</html>

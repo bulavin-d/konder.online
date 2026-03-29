@@ -172,8 +172,7 @@ svg {
     z-index: 10;
     text-align: center;
     width: 100%;
-    top: 55%;
-    /* JS overrides this every frame to track AC body center */
+    top: 55%; /* JS overrides this every frame to track AC body center */
     transform: translateY(-50%);
     padding: 0 24px;
     pointer-events: none;
@@ -860,332 +859,367 @@ svg {
         transition: none !important;
     }
 }
-
 /* ============================================================
-   AUTH & BONUS MODALS
+   AUTH / BONUS SYSTEM — добавлено поверх существующих стилей
    ============================================================ */
 
-/* Header Profile Button */
-.header-profile-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* ── Profile icon in header ── */
+.profile-icon-btn {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(59, 158, 237, 0.15);
-    color: var(--ice-light);
-    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-    margin: 0 16px 0 auto;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(77, 168, 240, 0.22);
+    color: var(--ice);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-family: var(--font);
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+    z-index: 10001;
+    flex-shrink: 0;
+}
+.profile-icon-btn:hover {
+    background: rgba(77, 168, 240, 0.18);
+    border-color: rgba(77, 168, 240, 0.5);
+    box-shadow: 0 0 16px rgba(77, 168, 240, 0.2);
+}
+.profile-icon-btn.logged-in {
+    background: linear-gradient(135deg, var(--blue) 0%, #2b7acc 100%);
+    border-color: transparent;
+    color: #fff;
+    box-shadow: 0 0 14px rgba(77, 168, 240, 0.35);
 }
 
-.header-profile-btn:hover {
-    background: rgba(59, 158, 237, 0.15);
-    border-color: rgba(59, 158, 237, 0.4);
-    color: var(--white-pure);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(59, 158, 237, 0.2);
-}
-
-.header-profile-btn.logged-in {
-    background: rgba(59, 158, 237, 0.2);
-    border-color: var(--blue);
-    color: var(--white-pure);
-    box-shadow: 0 0 12px rgba(59, 158, 237, 0.3);
-}
-
-/* Modal Overlay */
+/* ── Modal overlay ── */
 .modal-overlay {
     position: fixed;
     inset: 0;
-    z-index: 99998;
-    background: rgba(5, 12, 24, 0.7);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.4s ease, visibility 0.4s;
+    z-index: 10000;
+    background: rgba(4, 14, 35, 0.75);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
 }
 
-.modal-overlay.active {
-    opacity: 1;
-    visibility: visible;
-}
-
-/* Modal Box */
+/* ── Modal box (shared) ── */
 .modal-box {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -45%) scale(0.95);
+    background: rgba(10, 24, 52, 0.97);
+    border: 1px solid rgba(77, 168, 240, 0.22);
+    border-radius: 22px;
+    padding: 38px 32px 32px;
     width: 100%;
     max-width: 420px;
-    background: rgba(10, 22, 40, 0.85);
-    border: 1px solid rgba(77, 168, 240, 0.2);
-    border-radius: 24px;
-    padding: 32px;
-    z-index: 99999;
-    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-    text-align: center;
+    position: relative;
+    color: var(--txt-on-dark);
+    box-shadow: 0 28px 70px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(77, 168, 240, 0.07);
+    animation: modalPop 0.32s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
-.modal-box.active {
-    opacity: 1;
-    visibility: visible;
-    transform: translate(-50%, -50%) scale(1);
+@keyframes modalPop {
+    from { opacity: 0; transform: scale(0.9) translateY(20px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-.modal-close {
+.modal-close-btn {
     position: absolute;
-    top: 16px;
-    right: 16px;
-    width: 32px;
-    height: 32px;
+    top: 14px;
+    right: 14px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(77, 168, 240, 0.15);
+    color: var(--txt2-on-dark);
+    font-size: 0.72rem;
+    cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--txt2-on-dark);
-    font-size: 24px;
-    line-height: 1;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
-    transition: all 0.2s;
+    font-family: var(--font);
+    transition: background 0.2s, color 0.2s;
 }
-
-.modal-close:hover {
-    color: #fff;
-    background: rgba(255, 255, 255, 0.1);
-    transform: rotate(90deg);
-}
+.modal-close-btn:hover { background: rgba(255, 255, 255, 0.13); color: var(--white-pure); }
 
 .modal-title {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     font-weight: 800;
     color: var(--white-pure);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     letter-spacing: -0.5px;
 }
-
-.modal-sub {
-    font-size: 0.9rem;
+.modal-subtitle {
+    font-size: 0.82rem;
     color: var(--txt2-on-dark);
-    margin-bottom: 24px;
+    margin-bottom: 20px;
+    line-height: 1.5;
 }
 
-.modal-form {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
+/* ── Inputs ── */
 .modal-input {
+    display: block;
     width: 100%;
+    padding: 13px 16px;
     background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(77, 168, 240, 0.2);
+    border: 1px solid rgba(77, 168, 240, 0.18);
     border-radius: 12px;
-    padding: 14px 16px;
-    color: var(--ice);
-    font-size: 0.95rem;
+    color: var(--white-pure);
     font-family: var(--font);
-    transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
+    font-size: 0.92rem;
+    margin-bottom: 11px;
     outline: none;
+    -webkit-appearance: none;
+    transition: border-color 0.25s, background 0.25s;
 }
-
-.modal-input::placeholder {
-    color: rgba(140, 175, 210, 0.5);
-}
-
+.modal-input::placeholder { color: rgba(154, 187, 213, 0.45); }
 .modal-input:focus {
+    border-color: rgba(77, 168, 240, 0.55);
     background: rgba(255, 255, 255, 0.08);
-    border-color: var(--blue);
-    box-shadow: 0 0 0 3px rgba(59, 158, 237, 0.15);
 }
 
-.modal-link {
-    font-size: 0.85rem;
-    color: var(--blue);
-    font-weight: 500;
-    align-self: flex-end;
-    transition: color 0.3s;
-}
-
-.modal-link:hover {
-    color: #fff;
-    text-decoration: underline;
-}
-
+/* ── Buttons ── */
 .modal-btn {
+    display: block;
     width: 100%;
-    padding: 14px;
+    padding: 14px 20px;
     background: linear-gradient(135deg, var(--blue) 0%, #2b7acc 100%);
     color: #fff;
-    font-size: 1rem;
-    font-weight: 600;
-    border-radius: 12px;
-    margin-top: 8px;
-    transition: transform 0.2s, box-shadow 0.3s;
+    font-family: var(--font);
+    font-size: 0.92rem;
+    font-weight: 700;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    margin-top: 6px;
+    transition: transform 0.2s, box-shadow 0.25s, opacity 0.2s;
+    letter-spacing: 0.3px;
 }
-
-.modal-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(59, 158, 237, 0.4);
-}
+.modal-btn:hover { transform: scale(1.03); box-shadow: 0 8px 28px rgba(59, 158, 237, 0.45); }
+.modal-btn:active { transform: scale(0.97); }
+.modal-btn:disabled { opacity: 0.55; cursor: default; transform: none !important; box-shadow: none !important; }
 
 .modal-btn-secondary {
+    display: block;
     width: 100%;
-    padding: 12px;
-    background: transparent;
+    padding: 13px 20px;
+    background: rgba(77, 168, 240, 0.09);
     color: var(--ice);
-    border: 1px solid rgba(77, 168, 240, 0.3);
-    border-radius: 12px;
+    font-family: var(--font);
+    font-size: 0.88rem;
     font-weight: 600;
-    transition: all 0.2s;
+    border-radius: 50px;
+    border: 1px solid rgba(77, 168, 240, 0.22);
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.25s, border-color 0.25s;
 }
+.modal-btn-secondary:hover { background: rgba(77, 168, 240, 0.18); border-color: rgba(77, 168, 240, 0.42); }
 
-.modal-btn-secondary:hover {
-    background: rgba(77, 168, 240, 0.1);
-    color: #fff;
+.modal-btn-signout {
+    display: block;
+    width: 100%;
+    padding: 13px 20px;
+    background: rgba(255, 60, 60, 0.08);
+    color: rgba(255, 130, 130, 0.9);
+    font-family: var(--font);
+    font-size: 0.88rem;
+    font-weight: 600;
+    border-radius: 50px;
+    border: 1px solid rgba(255, 60, 60, 0.18);
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background 0.25s, border-color 0.25s;
 }
+.modal-btn-signout:hover { background: rgba(255, 60, 60, 0.18); border-color: rgba(255, 60, 60, 0.35); }
 
-.modal-footer {
-    margin-top: 24px;
-    font-size: 0.85rem;
+.modal-footer-text {
+    font-size: 0.8rem;
     color: var(--txt2-on-dark);
-    display: flex;
-    justify-content: center;
-    gap: 8px;
+    text-align: center;
+    margin-top: 14px;
+    line-height: 1.6;
+}
+.modal-footer-text a {
+    color: var(--ice);
+    text-decoration: underline;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.modal-footer-text a:hover { color: var(--blue); }
+
+/* ── Alert modal ── */
+.modal-alert-box { text-align: center; padding: 40px 32px 32px; max-width: 380px; }
+.modal-alert-text {
+    font-size: 0.95rem;
+    color: var(--txt-on-dark);
+    line-height: 1.7;
+    margin-bottom: 22px;
+    white-space: pre-line;
 }
 
-.modal-footer .modal-link {
-    align-self: auto;
+/* ── Profile modal ── */
+.modal-greeting {
+    font-size: 1.05rem;
+    color: var(--ice-light);
+    margin-bottom: 18px;
+    font-weight: 500;
 }
+.modal-greeting span { font-weight: 800; color: var(--white-pure); }
 
-/* Profile Cabinet */
-.profile-balance-box {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px dashed rgba(77, 168, 240, 0.3);
+.profile-balance-wrap {
+    background: rgba(77, 168, 240, 0.07);
+    border: 1px solid rgba(77, 168, 240, 0.2);
     border-radius: 16px;
-    padding: 24px;
-    margin-bottom: 24px;
-}
-
-.pb-label {
-    font-size: 0.85rem;
-    color: var(--txt2-on-dark);
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-}
-
-.pb-value {
-    font-size: 2.2rem;
-    font-weight: 900;
-    color: var(--blue);
-    text-shadow: 0 0 20px rgba(59, 158, 237, 0.4);
-}
-
-.profile-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-/* Tooltip */
-.tooltip-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    font-size: 11px;
-    font-weight: bold;
-    cursor: help;
+    padding: 22px 20px 18px;
+    text-align: center;
+    margin-bottom: 14px;
     position: relative;
 }
-
-.tooltip-text {
-    position: absolute;
-    bottom: calc(100% + 10px);
-    left: 50%;
-    transform: translateX(-50%) translateY(5px);
-    background: rgba(5, 12, 24, 0.95);
-    border: 1px solid rgba(77, 168, 240, 0.2);
+.profile-balance-num {
+    font-size: 2.8rem;
+    font-weight: 900;
     color: var(--ice);
-    padding: 10px 14px;
-    border-radius: 8px;
-    font-size: 0.75rem;
-    width: 200px;
-    text-align: center;
-    line-height: 1.4;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s;
-    pointer-events: none;
-    text-transform: none;
-    letter-spacing: normal;
+    letter-spacing: -1px;
+    line-height: 1;
+}
+.balance-currency { font-size: 1.9rem; }
+.profile-balance-label {
+    font-size: 0.72rem;
+    color: var(--txt2-on-dark);
+    text-transform: uppercase;
+    letter-spacing: 1.8px;
+    margin-top: 5px;
 }
 
-.tooltip-icon:hover .tooltip-text {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-50%) translateY(0);
+.tooltip-wrap { position: absolute; top: 10px; right: 10px; }
+.tooltip-btn {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: rgba(77, 168, 240, 0.14);
+    border: 1px solid rgba(77, 168, 240, 0.28);
+    color: var(--ice);
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font);
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+}
+.tooltip-btn:hover { background: rgba(77, 168, 240, 0.26); }
+.tooltip-bubble {
+    position: absolute;
+    right: 0;
+    top: 28px;
+    width: 216px;
+    background: rgba(8, 20, 48, 0.98);
+    border: 1px solid rgba(77, 168, 240, 0.28);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 0.78rem;
+    color: var(--txt-on-dark);
+    line-height: 1.6;
+    z-index: 200;
+    display: none;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+    text-align: left;
+}
+.tooltip-bubble.visible { display: block; }
+
+.profile-phone-row {
+    font-size: 0.85rem;
+    color: var(--txt2-on-dark);
+    margin-bottom: 16px;
 }
 
-/* Lead Magnet Bonus Popup */
-.modal-bonus {
-    padding: 0;
+/* ── Bonus popup ── */
+.modal-bonus-box {
+    max-width: 390px;
     overflow: hidden;
+    padding: 0;
+    text-align: center;
+    background: linear-gradient(160deg, #0a1e48 0%, #071232 100%);
+    border-color: rgba(255, 210, 60, 0.25);
 }
-
 .bonus-canvas {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    z-index: 1;
     pointer-events: none;
+    border-radius: 22px;
 }
-
 .bonus-content {
     position: relative;
     z-index: 2;
-    padding: 40px 32px;
-    background: radial-gradient(circle at center top, rgba(59, 158, 237, 0.15) 0%, transparent 70%);
+    padding: 48px 32px 38px;
 }
-
-.bonus-badge {
-    display: inline-block;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #fff;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    padding: 4px 12px;
-    border-radius: 50px;
-    margin-bottom: 16px;
+.bonus-amount {
+    font-size: 4rem;
+    font-weight: 900;
+    color: var(--white-pure);
+    line-height: 1;
+    letter-spacing: -2px;
+    margin-bottom: 0;
 }
+.bonus-currency { font-size: 2.8rem; color: #FFD700; }
+.bonus-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--ice-light);
+    margin: 8px 0 4px;
+}
+.bonus-subtitle {
+    font-size: 0.78rem;
+    color: rgba(154, 187, 213, 0.7);
+    margin-bottom: 28px;
+    line-height: 1.5;
+}
+.bonus-get-btn {
+    background: linear-gradient(135deg, #FFD700 0%, #f0a800 100%) !important;
+    color: #0d1f35 !important;
+    font-size: 0.95rem;
+    letter-spacing: 0.6px;
+    box-shadow: 0 6px 30px rgba(255, 200, 0, 0.4) !important;
+}
+.bonus-get-btn:hover { box-shadow: 0 10px 40px rgba(255, 200, 0, 0.55) !important; }
+.bonus-close-link {
+    display: block;
+    margin-top: 14px;
+    font-size: 0.78rem;
+    color: rgba(154, 187, 213, 0.55);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: color 0.2s;
+}
+.bonus-close-link:hover { color: var(--ice); }
 
-/* Mobile Adjustments */
+/* ── Mobile responsive ── */
 @media (max-width: 480px) {
+    .modal-overlay { padding: 12px; align-items: flex-end; }
     .modal-box {
-        max-width: 90%;
-        padding: 24px;
+        padding: 28px 20px 24px;
+        border-radius: 20px 20px 0 0;
+        max-width: 100%;
     }
-
-    .header-profile-btn {
-        margin: 0 12px 0 auto;
-    }
+    .modal-alert-box { border-radius: 20px; max-width: 100%; }
+    .modal-bonus-box { border-radius: 20px 20px 0 0; }
+    .modal-input { font-size: 16px; } /* prevents iOS zoom */
+    .modal-btn  { font-size: 1rem; padding: 16px; }
+    .modal-btn-secondary,
+    .modal-btn-signout { font-size: 0.95rem; padding: 14px; }
+    .profile-icon-btn { width: 36px; height: 36px; }
+    .bonus-amount { font-size: 3.2rem; }
 }

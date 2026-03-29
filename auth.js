@@ -1,292 +1,436 @@
-// ============================================================
-// auth.js — Supabase Integration & Profile Management
-// ============================================================
+/* =============================================
+   KONDER.ONLINE — auth.js v1
+   Supabase Auth + Bonus System
+   Anon key безопасен на клиенте при наличии RLS
+   ============================================= */
 
-// 1. Инициализация Supabase
-const SUPABASE_URL = 'https://stbpdxckbautwiagzjfo.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0YnBkeGNrYmF1dHdpYWd6amZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3ODg5OTksImV4cCI6MjA5MDM2NDk5OX0.DEObn0CLhiXvFYz2Kc2w6n6tj3GtzTFSlFn1yxKFT1Q';
+var SUPABASE_URL     = 'https://stbpdxckbautwiagzjfo.supabase.co';
+var SUPABASE_ANON_KEY= 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0YnBkeGNrYmF1dHdpYWd6amZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3ODg5OTksImV4cCI6MjA5MDM2NDk5OX0.DEObn0CLhiXvFYz2Kc2w6n6tj3GtzTFSlFn1yxKFT1Q';
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let currentUser = null;
-let currentProfile = null;
-
-// ============================================================
-// Управление модальными окнами
-// ============================================================
+/* ─────────────────────────────────────────────
+   MODAL MANAGEMENT
+───────────────────────────────────────────── */
+var _activeModal = null;
 
 function openModal(id) {
-    document.querySelectorAll('.modal-box').forEach(el => el.classList.remove('active'));
-    document.getElementById('modal-overlay').classList.add('active');
-    document.getElementById(id).classList.add('active');
+    var overlay = document.getElementById('modal-overlay');
+    var boxes   = overlay.querySelectorAll('.modal-box');
+    boxes.forEach(function(b) { b.style.display = 'none'; });
+    var target = document.getElementById(id);
+    if (!target) return;
+    target.style.display = 'block';
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    _activeModal = id;
 }
 
 function closeModal() {
-    document.getElementById('modal-overlay').classList.remove('active');
-    document.querySelectorAll('.modal-box').forEach(el => el.classList.remove('active'));
-    document.getElementById('modal-bonus').classList.remove('active');
+    var overlay = document.getElementById('modal-overlay');
+    if (overlay) overlay.style.display = 'none';
+    document.body.style.overflow = '';
+    _activeModal = null;
 }
 
-function showAlert(text) {
-    document.getElementById('alert-text').textContent = text;
+function switchTo(id) {
+    var boxes = document.querySelectorAll('.modal-box');
+    boxes.forEach(function(b) { b.style.display = 'none'; });
+    var target = document.getElementById(id);
+    if (target) { target.style.display = 'block'; _activeModal = id; }
+}
+
+function showAlert(msg, onOk) {
+    document.getElementById('alert-text').textContent = msg;
+    document.getElementById('alert-ok-btn').onclick = function() {
+        closeModal();
+        if (typeof onOk === 'function') onOk();
+    };
     openModal('modal-alert');
 }
 
-// Закрытие по клику вне модалки
-document.getElementById('modal-overlay')?.addEventListener('click', (e) => {
-    if (e.target.id === 'modal-overlay') closeModal();
-});
-
-// Кнопки "Закрыть" и "Назад"
-document.querySelectorAll('.modal-close, .js-close-modal').forEach(btn => {
-    btn.addEventListener('click', () => closeModal());
-});
-
-document.querySelectorAll('.js-open-modal').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        openModal(btn.dataset.target);
-    });
-});
-
-// ============================================================
-// Слушатель состояния авторизации
-// ============================================================
-
-supabase.auth.onAuthStateChange(async (event, session) => {
-    if (session && session.user) {
-        currentUser = session.user;
-        await loadProfile(currentUser.id);
-
-        // Меняем логику иконки в хедере - теперь она открывает профиль
-        const headerIcon = document.getElementById('header-profile-btn');
-        if (headerIcon) {
-            headerIcon.onclick = (e) => { e.preventDefault(); openModal('modal-profile'); };
-            headerIcon.classList.add('logged-in'); // Опционально: стиль активного юзера
-        }
-
-        // Если открыто окно логина/регистрации — закрываем
-        const activeModal = document.querySelector('.modal-box.active');
-        if (activeModal && (activeModal.id === 'modal-login' || activeModal.id === 'modal-register')) {
-            closeModal();
-            openModal('modal-profile');
-        }
+/* ─────────────────────────────────────────────
+   HEADER PROFILE ICON
+───────────────────────────────────────────── */
+function setProfileUI(loggedIn, profile) {
+    var btn = document.getElementById('profile-icon-btn');
+    if (!btn) return;
+    if (loggedIn && profile) {
+        var initials = (profile.full_name || 'К').trim().charAt(0).toUpperCase();
+        btn.innerHTML = '<span style="font-size:0.95rem;font-weight:800;letter-spacing:0">' + initials + '</span>';
+        btn.classList.add('logged-in');
+        btn.title = profile.full_name || 'Кабинет';
     } else {
-        currentUser = null;
-        currentProfile = null;
-
-        // Иконка в хедере открывает окно входа
-        const headerIcon = document.getElementById('header-profile-btn');
-        if (headerIcon) {
-            headerIcon.onclick = (e) => { e.preventDefault(); openModal('modal-login'); };
-            headerIcon.classList.remove('logged-in');
-        }
+        btn.innerHTML = '<svg width="20" height="20"><use href="#i-user"/></svg>';
+        btn.classList.remove('logged-in');
+        btn.title = 'Войти / Регистрация';
     }
-});
-
-// ============================================================
-// Профиль и Баланс
-// ============================================================
-
-async function loadProfile(userId) {
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('full_name, bonus_balance, phone')
-        .eq('id', userId)
-        .single();
-
-    if (error) {
-        console.error("Ошибка загрузки профиля:", error);
-        return;
-    }
-
-    currentProfile = data;
-
-    // Обновляем текст в кабинете
-    const nameEl = document.getElementById('profile-name');
-    const balanceEl = document.getElementById('profile-balance');
-
-    if (nameEl) nameEl.textContent = data.full_name || 'Клиент';
-    if (balanceEl) balanceEl.textContent = data.bonus_balance || '0';
 }
 
-// ============================================================
-// Регистрация, Вход, Сброс
-// ============================================================
+/* ─────────────────────────────────────────────
+   DATABASE — load profile
+───────────────────────────────────────────── */
+function loadProfile(userId, callback) {
+    sb.from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single()
+      .then(function(res) {
+          callback(res.error ? null : res.data);
+      });
+}
 
-// Регистрация
-document.getElementById('form-register')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = e.target.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.textContent = 'Обработка...';
+/* ─────────────────────────────────────────────
+   AUTH ACTIONS
+───────────────────────────────────────────── */
+function doSignUp() {
+    var name  = document.getElementById('reg-name').value.trim();
+    var email = document.getElementById('reg-email').value.trim();
+    var pass  = document.getElementById('reg-pass').value;
+    var phone = document.getElementById('reg-phone').value.trim();
 
-    const fullname = document.getElementById('reg-name').value.trim();
-    const email = document.getElementById('reg-email').value.trim();
-    const phone = document.getElementById('reg-phone').value.trim();
-    const password = document.getElementById('reg-password').value;
+    if (!name || !email || !pass) { showAlert('Заполните обязательные поля (имя, email, пароль).'); return; }
+    if (pass.length < 6)          { showAlert('Пароль должен быть не менее 6 символов.'); return; }
 
-    const { data, error } = await supabase.auth.signUp({
+    var btn = document.getElementById('reg-submit-btn');
+    btn.disabled = true; btn.textContent = 'Отправляем…';
+
+    sb.auth.signUp({
         email: email,
-        password: password,
-        options: {
-            data: { full_name: fullname, phone: phone }
+        password: pass,
+        options: { data: { full_name: name, phone: phone } }
+    }).then(function(res) {
+        btn.disabled = false; btn.textContent = 'Зарегистрироваться';
+        if (res.error) {
+            var msg = res.error.message;
+            if (msg.indexOf('already registered') !== -1 || msg.indexOf('already been registered') !== -1) {
+                msg = 'Этот email уже зарегистрирован. Попробуйте войти.';
+            }
+            showAlert(msg);
+        } else {
+            showAlert('✉️ Письмо с подтверждением отправлено на:\n' + email + '\n\nЕсли письмо не пришло — проверьте папку «Спам».');
         }
     });
+}
 
-    btn.disabled = false;
-    btn.textContent = 'Зарегистрироваться';
+function doSignIn() {
+    var email = document.getElementById('login-email').value.trim();
+    var pass  = document.getElementById('login-pass').value;
+    if (!email || !pass) { showAlert('Введите email и пароль.'); return; }
 
-    if (error) {
-        showAlert(error.message);
-    } else {
-        showAlert('Письмо с ссылкой для подтверждения аккаунта отправлено на почту. Проверьте также папку спам.');
-    }
-});
+    var btn = document.getElementById('login-submit-btn');
+    btn.disabled = true; btn.textContent = 'Входим…';
 
-// Вход
-document.getElementById('form-login')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = e.target.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.textContent = 'Вход...';
-
-    const email = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value;
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password
+    sb.auth.signInWithPassword({ email: email, password: pass }).then(function(res) {
+        btn.disabled = false; btn.textContent = 'Войти';
+        if (res.error) {
+            showAlert('Неверный email или пароль.\nПроверьте данные и попробуйте снова.');
+        } else {
+            closeModal();
+        }
     });
+}
 
-    btn.disabled = false;
-    btn.textContent = 'Войти';
+function doResetPassword() {
+    var email = document.getElementById('forgot-email').value.trim();
+    if (!email) { showAlert('Введите ваш email.'); return; }
 
-    if (error) {
-        if (error.message.includes('Invalid login')) showAlert('Неверный Email или пароль.');
-        else if (error.message.includes('Email not confirmed')) showAlert('Пожалуйста, подтвердите вашу почту (проверьте письмо от нас).');
-        else showAlert(error.message);
-    }
-});
+    var btn = document.getElementById('forgot-submit-btn');
+    btn.disabled = true; btn.textContent = 'Отправляем…';
 
-// Сброс пароля
-document.getElementById('form-forgot')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = e.target.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.textContent = 'Отправка...';
-
-    const email = document.getElementById('forgot-email').value.trim();
-
-    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/index.html'
+    sb.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/'
+    }).then(function(res) {
+        btn.disabled = false; btn.textContent = 'Отправить ссылку';
+        if (res.error) {
+            showAlert('Ошибка: ' + res.error.message);
+        } else {
+            showAlert('✉️ Ссылка для сброса пароля отправлена на:\n' + email);
+        }
     });
+}
 
-    btn.disabled = false;
-    btn.textContent = 'Отправить ссылку';
-
-    if (error) {
-        showAlert(error.message);
-    } else {
-        showAlert('Ссылка для восстановления отправлена на вашу почту.');
-    }
-});
-
-// Выход
-document.getElementById('btn-logout')?.addEventListener('click', async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) showAlert(error.message);
-    else {
+function doSignOut() {
+    sb.auth.signOut().then(function() {
         closeModal();
-        showAlert('Вы успешно вышли из аккаунта.');
-    }
-});
+        setProfileUI(false, null);
+    });
+}
 
-// ============================================================
-// Lead Magnet Popup (2000₸ Бонусов)
-// ============================================================
+function doProfileReset() {
+    sb.auth.getSession().then(function(res) {
+        var session = res.data && res.data.session;
+        if (!session) return;
+        sb.auth.resetPasswordForEmail(session.user.email, {
+            redirectTo: window.location.origin + '/'
+        }).then(function(r) {
+            showAlert(r.error ? 'Ошибка: ' + r.error.message
+                : '✉️ Ссылка для сброса пароля отправлена на вашу почту.');
+        });
+    });
+}
 
-setTimeout(async () => {
-    // 1. Проверяем, залогинен ли уже пользователь
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) return; // Уже залогинен, скрываем акцию
+/* ─────────────────────────────────────────────
+   PROFILE MODAL — render
+───────────────────────────────────────────── */
+function renderProfileModal(profile) {
+    document.getElementById('profile-name').textContent    = profile.full_name || 'Клиент';
+    document.getElementById('profile-balance').textContent = (profile.bonus_balance || 0).toLocaleString('ru-RU');
+    document.getElementById('profile-phone').textContent   = profile.phone || 'не указан';
+    openModal('modal-profile');
+}
 
-    // 2. Проверяем, закрывал ли он попап ранее
+/* ─────────────────────────────────────────────
+   LEAD MAGNET POPUP
+───────────────────────────────────────────── */
+function tryShowBonusPopup() {
+    /* Уже закрывал — не показываем */
     if (localStorage.getItem('konder_bonus_closed')) return;
 
-    // 3. Проверяем глобальную настройку в Supabase (включена ли акция)
-    const { data: settings } = await supabase
-        .from('settings')
-        .select('value')
-        .eq('key', 'promo_enabled')
-        .single();
+    /* Проверяем сессию и настройку промо */
+    sb.auth.getSession().then(function(res) {
+        if (res.data && res.data.session) return; /* залогинен — не нужно */
+        sb.from('settings').select('value').eq('key', 'promo_enabled').single().then(function(cfg) {
+            if (cfg.data && cfg.data.value === 'true') {
+                openModal('modal-bonus');
+                startBonusCanvas();
+            }
+        });
+    });
+}
 
-    if (settings && settings.value === 'false') return;
-
-    // 4. Показываем Canvas и Попап
-    const popup = document.getElementById('modal-bonus');
-    const overlay = document.getElementById('modal-overlay');
-    if (popup && overlay) {
-        overlay.classList.add('active');
-        popup.classList.add('active');
-        initBonusCanvas();
-    }
-}, 7000);
-
-// Закрытие Lead Magnet
-document.getElementById('btn-close-bonus')?.addEventListener('click', () => {
-    localStorage.setItem('konder_bonus_closed', 'true');
-    closeModal();
-});
-
-// Переход к регистрации из бонуса
-document.getElementById('btn-claim-bonus')?.addEventListener('click', () => {
-    localStorage.setItem('konder_bonus_closed', 'true'); // Больше не показываем
-    closeModal();
-    openModal('modal-register');
-});
-
-
-// Простой Canvas эффект для бонусного попапа (монетки/снежинки)
-function initBonusCanvas() {
-    const canvas = document.getElementById('bonus-canvas');
+/* ─────────────────────────────────────────────
+   BONUS CANVAS ANIMATION
+───────────────────────────────────────────── */
+function startBonusCanvas() {
+    var canvas = document.getElementById('bonus-canvas');
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    var ctx = canvas.getContext('2d');
 
-    let w = canvas.parentElement.offsetWidth;
-    let h = canvas.parentElement.offsetHeight;
-    canvas.width = w; canvas.height = h;
+    function resize() {
+        canvas.width  = canvas.offsetWidth  || 390;
+        canvas.height = canvas.offsetHeight || 320;
+    }
+    resize();
 
-    const particles = [];
-    for (let i = 0; i < 30; i++) {
-        particles.push({
-            x: Math.random() * w,
-            y: Math.random() * h,
-            r: 2 + Math.random() * 4,
-            speedY: 0.5 + Math.random() * 1.5,
-            speedX: (Math.random() - 0.5) * 1,
-            op: Math.random()
-        });
+    var particles = [];
+    for (var i = 0; i < 32; i++) {
+        particles.push(makeParticle(canvas.width, canvas.height, true));
     }
 
+    function makeParticle(w, h, initial) {
+        var isCoin = Math.random() > 0.48;
+        return {
+            x:          Math.random() * w,
+            y:          initial ? Math.random() * h : h + 20,
+            size:       isCoin ? (2.5 + Math.random() * 3.5) : (1.8 + Math.random() * 3),
+            speed:      0.55 + Math.random() * 1.15,
+            opacity:    0.25 + Math.random() * 0.65,
+            wobble:     Math.random() * Math.PI * 2,
+            wobbleSpd:  0.018 + Math.random() * 0.028,
+            isCoin:     isCoin,
+            rotation:   Math.random() * Math.PI * 2,
+            rotSpd:     (Math.random() - 0.5) * 0.06
+        };
+    }
+
+    var animId;
     function draw() {
-        if (!document.getElementById('modal-bonus').classList.contains('active')) return;
+        if (!canvas.isConnected) { cancelAnimationFrame(animId); return; }
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        ctx.clearRect(0, 0, w, h);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        particles.forEach(function(p) {
+            p.y        -= p.speed;
+            p.wobble   += p.wobbleSpd;
+            p.x        += Math.sin(p.wobble) * 0.7;
+            p.rotation += p.rotSpd;
+            if (p.y < -24) {
+                var np  = makeParticle(canvas.width, canvas.height, false);
+                p.x     = np.x; p.y = np.y; p.size = np.size;
+                p.speed = np.speed; p.opacity = np.opacity;
+                p.isCoin = np.isCoin; p.rotation = np.rotation;
+                p.wobble = np.wobble;
+            }
 
-        particles.forEach(p => {
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-            ctx.fill();
+            ctx.save();
+            ctx.globalAlpha = p.opacity;
 
-            p.y += p.speedY;
-            p.x += p.speedX;
+            if (p.isCoin) {
+                /* Монета ₸ */
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation);
+                /* Glow */
+                var grd = ctx.createRadialGradient(0, 0, 0, 0, 0, p.size * 3.2);
+                grd.addColorStop(0,   'rgba(255,215,0,0.45)');
+                grd.addColorStop(0.5, 'rgba(255,185,0,0.12)');
+                grd.addColorStop(1,   'rgba(255,160,0,0)');
+                ctx.fillStyle = grd;
+                ctx.beginPath(); ctx.arc(0, 0, p.size * 3.2, 0, Math.PI * 2); ctx.fill();
+                /* Coin face */
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath(); ctx.arc(0, 0, p.size, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = 'rgba(255,255,255,0.28)';
+                ctx.beginPath(); ctx.arc(-p.size * 0.28, -p.size * 0.28, p.size * 0.5, 0, Math.PI * 2); ctx.fill();
+                /* ₸ symbol */
+                if (p.size > 3.2) {
+                    ctx.fillStyle = '#7a5800';
+                    ctx.font = 'bold ' + Math.round(p.size * 1.05) + 'px Inter,sans-serif';
+                    ctx.textAlign    = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('₸', 0, 0.5);
+                }
+            } else {
+                /* Ice crystal */
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rotation);
+                ctx.strokeStyle = 'rgba(185,232,255,' + p.opacity + ')';
+                ctx.lineWidth   = Math.max(0.4, p.size * 0.28);
+                ctx.lineCap     = 'round';
+                var arm = p.size * 1.9;
+                for (var a = 0; a < 6; a++) {
+                    ctx.save();
+                    ctx.rotate((Math.PI / 3) * a);
+                    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(arm, 0); ctx.stroke();
+                    /* side barbs */
+                    if (p.size > 2.5) {
+                        var b = arm * 0.55;
+                        ctx.beginPath(); ctx.moveTo(b, 0); ctx.lineTo(b + arm * 0.22, -arm * 0.22); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(b, 0); ctx.lineTo(b + arm * 0.22,  arm * 0.22); ctx.stroke();
+                    }
+                    ctx.restore();
+                }
+                /* center dot */
+                ctx.fillStyle = 'rgba(220,245,255,0.9)';
+                ctx.beginPath(); ctx.arc(0, 0, p.size * 0.28, 0, Math.PI * 2); ctx.fill();
+            }
 
-            if (p.y > h) { p.y = -10; p.x = Math.random() * w; }
+            ctx.restore();
         });
 
-        requestAnimationFrame(draw);
+        animId = requestAnimationFrame(draw);
     }
     draw();
 }
+
+/* ─────────────────────────────────────────────
+   INIT — DOMContentLoaded
+───────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', function() {
+
+    /* ── Profile icon click ── */
+    var iconBtn = document.getElementById('profile-icon-btn');
+    if (iconBtn) {
+        iconBtn.addEventListener('click', function() {
+            sb.auth.getSession().then(function(res) {
+                var session = res.data && res.data.session;
+                if (session) {
+                    loadProfile(session.user.id, function(profile) {
+                        if (profile) renderProfileModal(profile);
+                    });
+                } else {
+                    openModal('modal-login');
+                }
+            });
+        });
+    }
+
+    /* ── Close on overlay background click ── */
+    var overlay = document.getElementById('modal-overlay');
+    if (overlay) {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) closeModal();
+        });
+    }
+
+    /* ── ESC closes ── */
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeModal();
+    });
+
+    /* ── Close buttons (×) ── */
+    document.querySelectorAll('.modal-close-btn').forEach(function(btn) {
+        btn.addEventListener('click', closeModal);
+    });
+
+    /* ── Switch links (data-switch) ── */
+    document.querySelectorAll('[data-switch]').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+            e.preventDefault();
+            switchTo(el.getAttribute('data-switch'));
+        });
+    });
+
+    /* ── Register ── */
+    var regBtn = document.getElementById('reg-submit-btn');
+    if (regBtn) regBtn.addEventListener('click', doSignUp);
+    document.getElementById('reg-pass') && document.getElementById('reg-pass').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') doSignUp();
+    });
+
+    /* ── Login ── */
+    var loginBtn = document.getElementById('login-submit-btn');
+    if (loginBtn) loginBtn.addEventListener('click', doSignIn);
+    document.getElementById('login-pass') && document.getElementById('login-pass').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') doSignIn();
+    });
+
+    /* ── Forgot ── */
+    var forgotBtn = document.getElementById('forgot-submit-btn');
+    if (forgotBtn) forgotBtn.addEventListener('click', doResetPassword);
+
+    /* ── Sign out ── */
+    var signoutBtn = document.getElementById('profile-signout-btn');
+    if (signoutBtn) signoutBtn.addEventListener('click', doSignOut);
+
+    /* ── Reset password from profile ── */
+    var resetBtn = document.getElementById('profile-reset-btn');
+    if (resetBtn) resetBtn.addEventListener('click', doProfileReset);
+
+    /* ── Tooltip ── */
+    var tooltipBtn    = document.getElementById('bonus-tooltip-btn');
+    var tooltipBubble = document.getElementById('bonus-tooltip-bubble');
+    if (tooltipBtn && tooltipBubble) {
+        tooltipBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            tooltipBubble.classList.toggle('visible');
+        });
+        document.addEventListener('click', function() {
+            tooltipBubble && tooltipBubble.classList.remove('visible');
+        });
+    }
+
+    /* ── Bonus popup buttons ── */
+    var bonusGetBtn = document.getElementById('bonus-get-btn');
+    if (bonusGetBtn) {
+        bonusGetBtn.addEventListener('click', function() {
+            closeModal();
+            openModal('modal-register');
+        });
+    }
+    var bonusCloseBtn = document.getElementById('bonus-close-btn');
+    if (bonusCloseBtn) {
+        bonusCloseBtn.addEventListener('click', function() {
+            localStorage.setItem('konder_bonus_closed', '1');
+            closeModal();
+        });
+    }
+
+    /* ── Auth state change ── */
+    sb.auth.onAuthStateChange(function(event, session) {
+        if (session && session.user) {
+            loadProfile(session.user.id, function(profile) {
+                setProfileUI(true, profile);
+                /* Refresh profile modal if it's open */
+                if (_activeModal === 'modal-profile' && profile) {
+                    document.getElementById('profile-balance').textContent =
+                        (profile.bonus_balance || 0).toLocaleString('ru-RU');
+                }
+            });
+        } else {
+            setProfileUI(false, null);
+        }
+    });
+
+    /* ── Lead Magnet: show after 7 seconds ── */
+    setTimeout(tryShowBonusPopup, 7000);
+});

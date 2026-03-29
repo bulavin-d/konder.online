@@ -1,264 +1,408 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KONDER.ONLINE — BOSS</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>KONDER — Панель управления</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <style>
         :root {
-            --bg: #051224;
-            --box: rgba(10, 22, 40, 0.85);
-            --border: rgba(77, 168, 240, 0.2);
-            --blue: #3b9eed;
-            --text: #e6edf8;
-            --text-muted: #8cafd2;
+            --navy: #0d1f35; --navy-mid: #132d50; --navy-light: #1c3d68;
+            --ice: #a8d4f5; --ice-light: #d0eafc;
+            --blue: #4da8f0; --blue-hover: #3a95dd;
+            --txt-on-dark: #e4eef7; --txt2-on-dark: #9abbd5;
+            --glass-bg-dark: rgba(20,42,75,0.55);
+            --glass-border-dark: rgba(77,168,240,0.18);
+            --font: 'Inter', system-ui, sans-serif;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html, body {
+            min-height:100vh; background:var(--navy);
+            color:var(--txt-on-dark); font-family:var(--font);
+            -webkit-font-smoothing:antialiased;
+        }
+        body { padding: 0 16px 60px; }
+
+        /* ── Header ── */
+        .boss-header {
+            display:flex; align-items:center; justify-content:space-between;
+            padding:20px 0 28px;
+            border-bottom:1px solid rgba(77,168,240,0.12);
+            margin-bottom:32px;
+        }
+        .boss-logo { font-size:1.2rem; font-weight:900; color:#fff; letter-spacing:-0.5px; }
+        .boss-logo span { color:var(--blue); }
+        .boss-badge {
+            font-size:0.72rem; font-weight:700; color:var(--navy);
+            background:var(--ice); border-radius:50px;
+            padding:4px 12px; letter-spacing:1px; text-transform:uppercase;
         }
 
-        body {
-            margin: 0;
-            padding: 20px;
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
+        /* ── Layout ── */
+        .boss-wrap { max-width:600px; margin:0 auto; }
+
+        /* ── Cards ── */
+        .boss-card {
+            background:var(--glass-bg-dark);
+            border:1px solid var(--glass-border-dark);
+            border-radius:20px; padding:28px 24px;
+            margin-bottom:20px;
+        }
+        .boss-card-title {
+            font-size:0.72rem; font-weight:700;
+            color:var(--txt2-on-dark); text-transform:uppercase;
+            letter-spacing:1.8px; margin-bottom:18px;
         }
 
-        .container {
-            width: 100%;
-            max-width: 500px;
-            background: var(--box);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-        }
+        /* ── Login form (shown when not authenticated) ── */
+        #login-section { display:none; }
 
-        h1 {
-            font-size: 24px;
-            margin: 0 0 24px 0;
-            text-align: center;
-            color: #fff;
+        /* ── Inputs ── */
+        .b-input {
+            display:block; width:100%; padding:13px 16px;
+            background:rgba(255,255,255,0.05);
+            border:1px solid rgba(77,168,240,0.2);
+            border-radius:12px; color:#fff;
+            font-family:var(--font); font-size:0.92rem;
+            outline:none; margin-bottom:12px;
+            -webkit-appearance:none;
+            transition:border-color 0.25s;
         }
+        .b-input::placeholder { color:rgba(154,187,213,0.4); }
+        .b-input:focus { border-color:rgba(77,168,240,0.55); }
 
-        .group {
-            margin-bottom: 20px;
+        /* ── Buttons ── */
+        .b-btn {
+            display:inline-flex; align-items:center; justify-content:center;
+            padding:13px 22px; border-radius:50px; border:none;
+            font-family:var(--font); font-size:0.9rem; font-weight:700;
+            cursor:pointer; transition:transform 0.2s, box-shadow 0.25s, opacity 0.2s;
         }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
-            color: var(--text-muted);
+        .b-btn:hover { transform:scale(1.03); }
+        .b-btn:active { transform:scale(0.97); }
+        .b-btn:disabled { opacity:0.5; cursor:default; transform:none !important; }
+        .b-btn-primary {
+            background:linear-gradient(135deg,var(--blue) 0%,#2b7acc 100%);
+            color:#fff; box-shadow:0 4px 18px rgba(59,158,237,0.3);
         }
-
-        input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--border);
-            background: rgba(255, 255, 255, 0.05);
-            color: #fff;
-            border-radius: 10px;
-            font-size: 16px;
-            box-sizing: border-box;
-            outline: none;
-            transition: 0.3s;
+        .b-btn-primary:hover { box-shadow:0 6px 28px rgba(59,158,237,0.5); }
+        .b-btn-full { display:flex; width:100%; }
+        .b-btn-green { background:linear-gradient(135deg,#2ecc71 0%,#1aaf5d 100%); color:#fff; }
+        .b-btn-red   { background:linear-gradient(135deg,#e74c3c 0%,#c0392b 100%); color:#fff; }
+        .b-btn-sm { padding:10px 18px; font-size:0.82rem; }
+        .b-btn-secondary {
+            background:rgba(255,60,60,0.1); color:rgba(255,130,130,0.9);
+            border:1px solid rgba(255,60,60,0.2); font-size:0.82rem; padding:8px 18px;
         }
+        .b-btn-secondary:hover { background:rgba(255,60,60,0.2); }
 
-        input:focus {
-            border-color: var(--blue);
+        /* ── Row/flex utils ── */
+        .row { display:flex; gap:10px; align-items:center; }
+        .row-between { display:flex; justify-content:space-between; align-items:center; }
+        .amount-input { flex:1; margin-bottom:0; max-width:130px; text-align:center; font-size:1.1rem; font-weight:700; }
+
+        /* ── Result card ── */
+        .result-card {
+            background:rgba(77,168,240,0.07);
+            border:1px solid rgba(77,168,240,0.22);
+            border-radius:16px; padding:20px;
+            display:none; margin-top:16px;
         }
-
-        button {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            background: linear-gradient(135deg, var(--blue), #2b7acc);
-            color: #fff;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 16px;
-            cursor: pointer;
-            transition: 0.3s;
+        .result-card.visible { display:block; }
+        .result-name { font-size:1.1rem; font-weight:800; color:#fff; margin-bottom:4px; }
+        .result-phone { font-size:0.82rem; color:var(--txt2-on-dark); margin-bottom:16px; }
+        .result-balance-label { font-size:0.7rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--txt2-on-dark); margin-bottom:2px; }
+        .result-balance {
+            font-size:2.4rem; font-weight:900; color:var(--ice);
+            letter-spacing:-1px; line-height:1; margin-bottom:20px;
         }
+        .result-balance span { font-size:1.6rem; }
 
-        button:hover {
-            filter: brightness(1.1);
+        /* ── Toggle switch ── */
+        .toggle-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+        .toggle-label { font-size:0.92rem; color:var(--txt-on-dark); line-height:1.4; }
+        .toggle-label small { display:block; font-size:0.76rem; color:var(--txt2-on-dark); margin-top:2px; }
+        .toggle-switch {
+            position:relative; width:52px; height:28px; flex-shrink:0;
+            cursor:pointer;
         }
-
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
+        .toggle-switch input { display:none; }
+        .toggle-track {
+            position:absolute; inset:0; border-radius:50px;
+            background:rgba(255,255,255,0.1);
+            border:1px solid rgba(77,168,240,0.2);
+            transition:background 0.3s, border-color 0.3s;
         }
-
-        .log-btn {
-            background: rgba(255, 255, 255, 0.1);
-            margin-top: 10px;
+        .toggle-switch input:checked ~ .toggle-track {
+            background:var(--blue); border-color:var(--blue);
         }
-
-        /* Dashboard */
-        #dashboard {
-            display: none;
+        .toggle-thumb {
+            position:absolute; top:3px; left:3px;
+            width:20px; height:20px; border-radius:50%;
+            background:#fff; transition:transform 0.3s;
+            box-shadow:0 2px 6px rgba(0,0,0,0.3);
         }
+        .toggle-switch input:checked ~ .toggle-thumb { transform:translateX(24px); }
 
-        .card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px dashed var(--border);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 20px;
+        /* ── Status message ── */
+        .status-msg {
+            font-size:0.82rem; font-weight:600; padding:8px 14px;
+            border-radius:10px; margin-top:12px; display:none;
         }
+        .status-ok   { background:rgba(46,204,113,0.15); color:#2ecc71; border:1px solid rgba(46,204,113,0.3); }
+        .status-err  { background:rgba(231,76,60,0.15);  color:#e74c3c;  border:1px solid rgba(231,76,60,0.3); }
 
-        .user-info {
-            margin-bottom: 16px;
+        /* ── Access denied screen ── */
+        .deny-screen {
+            display:none; text-align:center; padding:80px 20px;
         }
+        .deny-screen h2 { font-size:1.5rem; color:#e74c3c; margin-bottom:10px; }
+        .deny-screen p  { color:var(--txt2-on-dark); font-size:0.9rem; }
 
-        .user-name {
-            font-size: 18px;
-            font-weight: 600;
-            color: #fff;
-            margin-bottom: 4px;
+        /* ── Logged-in-as bar ── */
+        .loggedin-bar {
+            display:none; font-size:0.78rem; color:var(--txt2-on-dark);
+            align-items:center; gap:10px;
         }
+        .loggedin-bar strong { color:var(--ice); }
 
-        .user-balance {
-            font-size: 32px;
-            font-weight: 800;
-            color: var(--blue);
-        }
-
-        .actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .btn-green {
-            background: #28a745;
-        }
-
-        .btn-red {
-            background: #dc3545;
-        }
-
-        /* Toggle */
-        .promo-switch {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            margin-bottom: 24px;
-        }
-
-        .promo-switch span {
-            font-weight: 600;
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 28px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #334;
-            transition: .4s;
-            border-radius: 34px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 20px;
-            width: 20px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked+.slider {
-            background-color: var(--blue);
-        }
-
-        input:checked+.slider:before {
-            transform: translateX(22px);
-        }
-
-        #error-msg {
-            color: #ff5e5e;
-            font-size: 14px;
-            margin-top: 10px;
-            text-align: center;
+        @media (max-width:480px) {
+            .b-input { font-size:16px; }
+            .result-balance { font-size:2rem; }
+            .row { flex-wrap:wrap; }
+            .amount-input { max-width:100%; }
         }
     </style>
 </head>
-
 <body>
+<div class="boss-wrap">
 
-    <div class="container">
-        <h1 id="page-title">Авторизация BOSS</h1>
-
-        <!-- AUTH -->
-        <div id="auth-section">
-            <form id="login-form">
-                <div class="group">
-                    <label>Админ Email</label>
-                    <input type="email" id="a-email" required>
-                </div>
-                <div class="group">
-                    <label>Пароль</label>
-                    <input type="password" id="a-pass" required>
-                </div>
-                <button type="submit" id="btn-login">Войти в админку</button>
-            </form>
-            <p id="error-msg"></p>
+    <header class="boss-header">
+        <div class="boss-logo">KONDER<span>.</span>ONLINE</div>
+        <div style="display:flex;align-items:center;gap:12px;">
+            <div class="loggedin-bar" id="loggedin-bar">
+                <strong id="loggedin-email"></strong>
+                <button class="b-btn b-btn-secondary" onclick="doLogout()">Выйти</button>
+            </div>
+            <div class="boss-badge">BOSS</div>
         </div>
+    </header>
 
-        <!-- DASHBOARD -->
-        <div id="dashboard">
+    <!-- ── Доступ запрещён ── -->
+    <div class="deny-screen" id="deny-screen">
+        <h2>🚫 Доступ запрещён</h2>
+        <p>Эта страница доступна только администраторам KONDER.ONLINE</p>
+    </div>
 
-            <div class="promo-switch">
-                <span>Акция 2000₸ (Попап)</span>
-                <label class="switch">
-                    <input type="checkbox" id="promo-toggle">
-                    <span class="slider"></span>
-                </label>
-            </div>
-
-            <div class="group">
-                <label>Поиск по телефону</label>
-                <input type="text" id="search-phone" placeholder="Например: 777" autocomplete="off">
-            </div>
-
-            <div id="results"></div>
-
-            <button class="log-btn" id="btn-logout">Выйти</button>
+    <!-- ── Форма входа ── -->
+    <div id="login-section">
+        <div class="boss-card">
+            <div class="boss-card-title">Вход для администратора</div>
+            <input id="adm-email" class="b-input" type="email" placeholder="Email администратора">
+            <input id="adm-pass"  class="b-input" type="password" placeholder="Пароль">
+            <button class="b-btn b-btn-primary b-btn-full" onclick="adminLogin()">Войти</button>
+            <div id="login-err" class="status-msg status-err"></div>
         </div>
     </div>
 
-    <script src="boss.js"></script>
-</body>
+    <!-- ── Главная панель ── -->
+    <div id="admin-panel" style="display:none">
 
+        <!-- Поиск клиента -->
+        <div class="boss-card">
+            <div class="boss-card-title">🔍 Поиск клиента</div>
+            <div class="row">
+                <input id="search-phone" class="b-input" type="tel"
+                    placeholder="+7 --- --- -- --" style="flex:1;margin-bottom:0">
+                <button class="b-btn b-btn-primary b-btn-sm" onclick="searchClient()">Найти</button>
+            </div>
+
+            <!-- Карточка клиента -->
+            <div class="result-card" id="result-card">
+                <div class="result-name"  id="res-name"></div>
+                <div class="result-phone" id="res-phone"></div>
+
+                <div class="result-balance-label">Бонусный баланс</div>
+                <div class="result-balance" id="res-balance">0 <span>₸</span></div>
+
+                <!-- Начислить / Списать -->
+                <div class="row" style="margin-bottom:10px">
+                    <input id="bonus-amount" class="b-input amount-input" type="number"
+                        placeholder="Сумма" min="0">
+                    <button class="b-btn b-btn-green b-btn-sm" onclick="updateBonus(1)">＋ Начислить</button>
+                    <button class="b-btn b-btn-red   b-btn-sm" onclick="updateBonus(-1)">－ Списать</button>
+                </div>
+                <div id="bonus-status" class="status-msg"></div>
+            </div>
+            <div id="search-status" class="status-msg"></div>
+        </div>
+
+        <!-- Промо-акция -->
+        <div class="boss-card">
+            <div class="boss-card-title">🎁 Акция — поп-ап 2000₸</div>
+            <div class="toggle-row">
+                <div class="toggle-label">
+                    Показывать поп-ап новым посетителям
+                    <small>Если выключено — попап не появится даже если localStorage очищен</small>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="promo-toggle" onchange="togglePromo(this.checked)">
+                    <div class="toggle-track"></div>
+                    <div class="toggle-thumb"></div>
+                </label>
+            </div>
+            <div id="promo-status" class="status-msg"></div>
+        </div>
+
+    </div><!-- /admin-panel -->
+
+</div><!-- /boss-wrap -->
+
+<script>
+/* ── Config ── */
+var SUPABASE_URL      = 'https://stbpdxckbautwiagzjfo.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0YnBkeGNrYmF1dHdpYWd6amZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3ODg5OTksImV4cCI6MjA5MDM2NDk5OX0.DEObn0CLhiXvFYz2Kc2w6n6tj3GtzTFSlFn1yxKFT1Q';
+var ADMIN_EMAILS      = ['hamzapsih@gmail.com', 'danel_mer@mail.ru'];
+
+var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+var currentProfileId = null;
+
+/* ── Status helpers ── */
+function showStatus(id, msg, isOk) {
+    var el = document.getElementById(id);
+    el.textContent = msg;
+    el.className   = 'status-msg ' + (isOk ? 'status-ok' : 'status-err');
+    el.style.display = 'block';
+    if (isOk) setTimeout(function() { el.style.display = 'none'; }, 3500);
+}
+
+/* ── Admin login ── */
+function adminLogin() {
+    var email = document.getElementById('adm-email').value.trim();
+    var pass  = document.getElementById('adm-pass').value;
+    if (!email || !pass) { showStatus('login-err', 'Заполните все поля.', false); return; }
+
+    sb.auth.signInWithPassword({ email: email, password: pass }).then(function(res) {
+        if (res.error) {
+            showStatus('login-err', 'Неверный email или пароль.', false);
+        } else {
+            if (ADMIN_EMAILS.indexOf(res.data.user.email) === -1) {
+                showStatus('login-err', 'Доступ запрещён — вы не администратор.', false);
+                sb.auth.signOut();
+            } else {
+                initAdminUI(res.data.user.email);
+            }
+        }
+    });
+}
+
+/* ── Logout ── */
+function doLogout() {
+    sb.auth.signOut().then(function() {
+        location.reload();
+    });
+}
+
+/* ── Show admin panel ── */
+function initAdminUI(email) {
+    document.getElementById('login-section').style.display = 'none';
+    document.getElementById('admin-panel').style.display   = 'block';
+    var bar = document.getElementById('loggedin-bar');
+    bar.style.display = 'flex';
+    document.getElementById('loggedin-email').textContent = email;
+    loadPromoState();
+}
+
+/* ── Load promo state ── */
+function loadPromoState() {
+    sb.from('settings').select('value').eq('key', 'promo_enabled').single().then(function(res) {
+        if (res.data) {
+            document.getElementById('promo-toggle').checked = res.data.value === 'true';
+        }
+    });
+}
+
+/* ── Toggle promo ── */
+function togglePromo(enabled) {
+    sb.rpc('toggle_promo', { enabled: enabled }).then(function(res) {
+        if (res.error) {
+            showStatus('promo-status', 'Ошибка: ' + res.error.message, false);
+            /* revert toggle */
+            document.getElementById('promo-toggle').checked = !enabled;
+        } else {
+            showStatus('promo-status', enabled ? '✅ Акция включена' : '⏸ Акция выключена', true);
+        }
+    });
+}
+
+/* ── Search client by phone ── */
+function searchClient() {
+    var phone = document.getElementById('search-phone').value.trim();
+    if (!phone) { showStatus('search-status', 'Введите номер телефона.', false); return; }
+
+    document.getElementById('search-status').style.display = 'none';
+    document.getElementById('result-card').classList.remove('visible');
+    currentProfileId = null;
+
+    sb.rpc('search_profiles_by_phone', { search_phone: phone }).then(function(res) {
+        if (res.error) { showStatus('search-status', 'Ошибка: ' + res.error.message, false); return; }
+        if (!res.data || res.data.length === 0) {
+            showStatus('search-status', 'Клиент с таким номером не найден.', false); return;
+        }
+        var p = res.data[0];
+        currentProfileId = p.id;
+        document.getElementById('res-name').textContent    = p.full_name || '—';
+        document.getElementById('res-phone').textContent   = p.phone || p.email;
+        document.getElementById('res-balance').innerHTML   = (p.bonus_balance || 0).toLocaleString('ru-RU') + ' <span>₸</span>';
+        document.getElementById('result-card').classList.add('visible');
+        document.getElementById('bonus-status').style.display = 'none';
+    });
+}
+
+/* ── Update bonus ── */
+function updateBonus(sign) {
+    if (!currentProfileId) return;
+    var raw = parseInt(document.getElementById('bonus-amount').value, 10);
+    if (!raw || raw <= 0) { showStatus('bonus-status', 'Введите корректную сумму.', false); return; }
+    var amount = sign * raw;
+
+    sb.rpc('update_bonus', { profile_id: currentProfileId, amount: amount }).then(function(res) {
+        if (res.error) { showStatus('bonus-status', 'Ошибка: ' + res.error.message, false); return; }
+        var newBal = res.data;
+        document.getElementById('res-balance').innerHTML = newBal.toLocaleString('ru-RU') + ' <span>₸</span>';
+        document.getElementById('bonus-amount').value = '';
+        showStatus('bonus-status',
+            (sign > 0 ? '✅ Начислено: +' : '✅ Списано: -') + raw.toLocaleString('ru-RU') + '₸\nНовый баланс: ' + newBal.toLocaleString('ru-RU') + '₸',
+            true);
+    });
+}
+
+/* ── Enter to search ── */
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('search-phone').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') searchClient();
+    });
+    document.getElementById('adm-pass').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') adminLogin();
+    });
+
+    /* Check existing session */
+    sb.auth.getSession().then(function(res) {
+        var session = res.data && res.data.session;
+        if (session) {
+            if (ADMIN_EMAILS.indexOf(session.user.email) !== -1) {
+                initAdminUI(session.user.email);
+            } else {
+                document.getElementById('deny-screen').style.display = 'block';
+            }
+        } else {
+            document.getElementById('login-section').style.display = 'block';
+        }
+    });
+});
+</script>
+</body>
 </html>

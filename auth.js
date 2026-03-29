@@ -416,6 +416,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    /* ── Register ── */
+    var regBtn = document.getElementById('reg-submit-btn');
     if (regBtn) regBtn.addEventListener('click', doSignUp);
     document.getElementById('reg-pass') && document.getElementById('reg-pass').addEventListener('keydown', function(e) {
         if (e.key === 'Enter') doSignUp();

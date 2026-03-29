@@ -433,11 +433,12 @@ document.addEventListener('DOMContentLoaded', function() {
             openModal('modal-register');
         });
     }
+    /* Крестик бонус-попапа — помимо закрытия запоминаем, что юзер уже видел */
     var bonusCloseBtn = document.getElementById('bonus-close-btn');
     if (bonusCloseBtn) {
         bonusCloseBtn.addEventListener('click', function() {
             localStorage.setItem('konder_bonus_closed', '1');
-            closeModal();
+            /* closeModal() вызовется через общий обработчик .modal-close-btn */
         });
     }
 

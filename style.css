@@ -1142,15 +1142,14 @@ svg {
 
 /* ── Bonus popup ── */
 .modal-bonus-box {
-    max-width: 400px;
+    max-width: 380px;
     overflow: hidden;
     padding: 0;
     text-align: center;
-    background: linear-gradient(155deg, #07163a 0%, #050e28 50%, #0a1e3d 100%);
-    border-color: rgba(255, 210, 60, 0.3);
-    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.65),
-                0 0 0 1px rgba(255, 210, 60, 0.08),
-                0 0 60px rgba(255, 185, 0, 0.08) !important;
+    background: linear-gradient(160deg, #0c1e42 0%, #081528 55%, #0d2040 100%);
+    border-color: rgba(77, 168, 240, 0.2);
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.6),
+                0 0 0 1px rgba(77, 168, 240, 0.06);
 }
 .bonus-canvas {
     position: absolute;
@@ -1163,96 +1162,68 @@ svg {
 .bonus-content {
     position: relative;
     z-index: 2;
-    padding: 52px 36px 42px;
+    padding: 44px 36px 40px;
 }
-/* Декоративное свечение за цифрами */
-.bonus-amount-wrap {
-    position: relative;
+/* Бейджик сверху */
+.bonus-badge {
     display: inline-block;
-    margin-bottom: 2px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255, 200, 60, 0.8);
+    border: 1px solid rgba(255, 200, 60, 0.22);
+    border-radius: 50px;
+    padding: 4px 12px;
+    margin-bottom: 22px;
 }
-.bonus-amount-wrap::before {
-    content: '';
-    position: absolute;
-    inset: -20px -30px;
-    background: radial-gradient(ellipse 80% 70% at 50% 50%,
-        rgba(255, 200, 0, 0.18) 0%,
-        rgba(255, 160, 0, 0.06) 50%,
-        transparent 80%);
-    pointer-events: none;
-    border-radius: 50%;
-    z-index: 0;
-}
+/* Большая сумма — чисто, без казино */
 .bonus-amount {
-    position: relative;
-    z-index: 1;
-    font-size: 5.2rem;
+    font-size: 5rem;
     font-weight: 900;
     color: var(--white-pure);
     line-height: 1;
     letter-spacing: -3px;
     margin-bottom: 0;
-    /* Прозрачный градиентный текст */
-    background: linear-gradient(160deg, #ffffff 30%, rgba(255, 230, 120, 0.85) 70%, #FFD700 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-shadow: none;
-    filter: drop-shadow(0 0 18px rgba(255, 200, 0, 0.35));
 }
 .bonus-currency {
-    font-size: 3.4rem;
-    background: linear-gradient(160deg, #FFD700 0%, #f0a800 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    filter: drop-shadow(0 0 14px rgba(255, 185, 0, 0.5));
+    font-size: 3.2rem;
+    font-weight: 900;
+    color: #e8b400;
+    letter-spacing: 0;
+}
+/* Разделитель */
+.bonus-divider {
+    width: 36px;
+    height: 1px;
+    background: rgba(77, 168, 240, 0.25);
+    margin: 16px auto 14px;
 }
 .bonus-title {
-    font-size: 1.1rem;
-    font-weight: 700;
+    font-size: 1rem;
+    font-weight: 600;
     color: var(--ice-light);
-    margin: 10px 0 5px;
-    letter-spacing: -0.2px;
+    margin: 0 0 6px;
+    letter-spacing: -0.1px;
 }
 .bonus-subtitle {
     font-size: 0.75rem;
-    color: rgba(154, 187, 213, 0.6);
-    margin-bottom: 30px;
+    color: rgba(154, 187, 213, 0.45);
+    margin-bottom: 28px;
     line-height: 1.5;
-    letter-spacing: 0.2px;
-}
-/* Тонкая разделительная линия */
-.bonus-content::before {
-    content: '';
-    display: block;
-    width: 48px;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(255, 200, 0, 0.5), transparent);
-    margin: 0 auto 22px;
-    border-radius: 2px;
 }
 .bonus-get-btn {
-    background: linear-gradient(135deg, #FFD700 0%, #f0a800 100%) !important;
-    color: #0d1f35 !important;
-    font-size: 0.95rem;
-    letter-spacing: 0.6px;
-    box-shadow: 0 6px 30px rgba(255, 200, 0, 0.4) !important;
-}
-.bonus-get-btn:hover { box-shadow: 0 10px 40px rgba(255, 200, 0, 0.55) !important; }
-.bonus-close-link {
-    display: block;
-    margin-top: 14px;
-    font-size: 0.75rem;
-    color: rgba(154, 187, 213, 0.45);
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-family: var(--font);
-    transition: color 0.2s;
+    background: linear-gradient(135deg, #e8b400 0%, #c99600 100%) !important;
+    color: #0d1820 !important;
+    font-size: 0.9rem;
+    font-weight: 700;
     letter-spacing: 0.3px;
+    box-shadow: 0 4px 20px rgba(220, 170, 0, 0.28) !important;
 }
-.bonus-close-link:hover { color: var(--ice); }
+.bonus-get-btn:hover {
+    box-shadow: 0 8px 28px rgba(220, 170, 0, 0.42) !important;
+    transform: scale(1.02) !important;
+}
 
 /* ── Mobile responsive ── */
 @media (max-width: 480px) {
@@ -1276,5 +1247,8 @@ svg {
     .modal-btn-secondary,
     .modal-btn-signout { font-size: 0.95rem; padding: 14px; }
     .profile-icon-btn { width: 36px; height: 36px; }
-    .bonus-amount { font-size: 3.2rem; }
+    .bonus-amount { font-size: 3.8rem; letter-spacing: -2px; }
+    .bonus-currency { font-size: 2.6rem; }
+    .bonus-content { padding: 36px 24px 32px; }
+    .bonus-badge { font-size: 0.58rem; }
 }

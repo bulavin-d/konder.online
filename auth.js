@@ -139,7 +139,7 @@ function doResetPassword() {
     btn.disabled = true; btn.textContent = 'Отправляем…';
 
     sb.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/'
+        redirectTo: window.location.origin + window.location.pathname
     }).then(function(res) {
         btn.disabled = false; btn.textContent = 'Отправить ссылку';
         if (res.error) {
@@ -162,11 +162,37 @@ function doProfileReset() {
         var session = res.data && res.data.session;
         if (!session) return;
         sb.auth.resetPasswordForEmail(session.user.email, {
-            redirectTo: window.location.origin + '/'
+            redirectTo: window.location.origin + window.location.pathname
         }).then(function(r) {
             showAlert(r.error ? 'Ошибка: ' + r.error.message
                 : '✉️ Ссылка для сброса пароля отправлена на вашу почту.');
         });
+    });
+}
+
+function doUpdatePassword() {
+    var newPass    = document.getElementById('new-pass-input').value;
+    var confirmPass = document.getElementById('new-pass-confirm').value;
+
+    if (!newPass || newPass.length < 6) { showAlert('Пароль должен быть не менее 6 символов.'); return; }
+    if (newPass !== confirmPass)        { showAlert('Пароли не совпадают. Попробуйте ещё раз.'); return; }
+
+    var btn = document.getElementById('new-pass-submit-btn');
+    btn.disabled = true; btn.textContent = 'Сохраняем…';
+
+    sb.auth.updateUser({ password: newPass }).then(function(res) {
+        btn.disabled = false; btn.textContent = 'Сохранить';
+        if (res.error) {
+            showAlert('Ошибка: ' + res.error.message);
+        } else {
+            /* Чистим хэш из URL, чтобы не триггерить recovery повторно */
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState(null, '', window.location.pathname);
+            }
+            showAlert('✅ Пароль успешно обновлён! Теперь вы можете войти.', function() {
+                openModal('modal-login');
+            });
+        }
     });
 }
 
@@ -417,6 +443,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     /* ── Auth state change ── */
     sb.auth.onAuthStateChange(function(event, session) {
+        if (event === 'PASSWORD_RECOVERY') {
+            /* Пользователь перешёл по ссылке из письма — показываем модалку смены пароля */
+            openModal('modal-reset-password');
+            return;
+        }
         if (session && session.user) {
             loadProfile(session.user.id, function(profile) {
                 setProfileUI(true, profile);
@@ -430,6 +461,42 @@ document.addEventListener('DOMContentLoaded', function() {
             setProfileUI(false, null);
         }
     });
+
+    /* ── New password submit ── */
+    var newPassBtn = document.getElementById('new-pass-submit-btn');
+    if (newPassBtn) newPassBtn.addEventListener('click', doUpdatePassword);
+    var newPassInput = document.getElementById('new-pass-input');
+    if (newPassInput) newPassInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') doUpdatePassword();
+    });
+    var newPassConfirm = document.getElementById('new-pass-confirm');
+    if (newPassConfirm) newPassConfirm.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') doUpdatePassword();
+    });
+
+    /* ── Hash recovery fallback: #type=recovery ── */
+    /* На случай если Supabase передаёт токен через hash вместо события PASSWORD_RECOVERY */
+    (function checkHashRecovery() {
+        var hash = window.location.hash;
+        if (!hash) return;
+        var params = {};
+        hash.replace(/^#/, '').split('&').forEach(function(pair) {
+            var kv = pair.split('=');
+            params[decodeURIComponent(kv[0])] = decodeURIComponent(kv[1] || '');
+        });
+        if (params['type'] === 'recovery' && params['access_token']) {
+            /* Устанавливаем сессию вручную и открываем модалку смены пароля */
+            sb.auth.setSession({
+                access_token:  params['access_token'],
+                refresh_token: params['refresh_token'] || ''
+            }).then(function() {
+                if (window.history && window.history.replaceState) {
+                    window.history.replaceState(null, '', window.location.pathname);
+                }
+                openModal('modal-reset-password');
+            });
+        }
+    })();
 
     /* ── Lead Magnet: show after 7 seconds ── */
     setTimeout(tryShowBonusPopup, 7000);

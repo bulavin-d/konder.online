@@ -337,7 +337,7 @@
         <div id="modal-register" class="modal-box" style="display:none">
             <button class="modal-close-btn" aria-label="Закрыть">✕</button>
             <h2 class="modal-title">Регистрация</h2>
-            <p class="modal-subtitle">🎁 2000₸ бонусов каждому новому клиенту</p>
+            <p class="modal-subtitle">🎁 2&nbsp;000&nbsp;₸ бонусами каждому новому клиенту</p>
             <input id="reg-name"  class="modal-input" type="text"     placeholder="Ваше имя *" autocomplete="name">
             <input id="reg-email" class="modal-input" type="email"    placeholder="Email *" autocomplete="email">
             <input id="reg-pass"  class="modal-input" type="password" placeholder="Пароль (мин. 6 символов) *" autocomplete="new-password">
@@ -376,15 +376,15 @@
         <!-- Личный кабинет -->
         <div id="modal-profile" class="modal-box" style="display:none">
             <button class="modal-close-btn" aria-label="Закрыть">✕</button>
-            <h2 class="modal-title">Личный кабинет</h2>
+            <h2 class="modal-title">Личный кабинет.</h2>
             <p class="modal-greeting">Привет, <span id="profile-name"></span>!</p>
             <div class="profile-balance-wrap">
-                <div class="profile-balance-num"><span id="profile-balance">0</span><span class="balance-currency">₸</span></div>
+                <div class="profile-balance-num"><span id="profile-balance">0</span>&nbsp;<span class="balance-currency">₸</span></div>
                 <div class="profile-balance-label">бонусный баланс</div>
                 <div class="tooltip-wrap">
                     <button id="bonus-tooltip-btn" class="tooltip-btn">?</button>
                     <div id="bonus-tooltip-bubble" class="tooltip-bubble">
-                        Бонусы начисляются за каждый заказ и списываются как скидка при следующем вызове мастера. Потратить можно на любую услугу KONDER.
+                        Бонусы начисляются за каждый заказ и списываются как скидка при следующем вызове мастера. Потратить можно на любую услугу.
                     </div>
                 </div>
             </div>
@@ -397,12 +397,24 @@
         <div id="modal-bonus" class="modal-box modal-bonus-box" style="display:none">
             <canvas id="bonus-canvas" class="bonus-canvas"></canvas>
             <div class="bonus-content">
-                <div class="bonus-amount">2 000<span class="bonus-currency">₸</span></div>
-                <p class="bonus-title">бонусов на любую услугу</p>
-                <p class="bonus-subtitle">Каждому новому клиенту при регистрации</p>
+                <div class="bonus-amount-wrap">
+                    <div class="bonus-amount">2&nbsp;000&nbsp;<span class="bonus-currency">₸</span></div>
+                </div>
+                <p class="bonus-title">бонусами на любую услугу</p>
+                <p class="bonus-subtitle">(Каждому новому клиенту при регистрации)</p>
                 <button id="bonus-get-btn" class="modal-btn bonus-get-btn">🎁 ПОЛУЧИТЬ БОНУСЫ</button>
                 <button id="bonus-close-btn" class="bonus-close-link">Закрыть</button>
             </div>
+        </div>
+
+        <!-- Новый пароль (recovery flow) -->
+        <div id="modal-reset-password" class="modal-box" style="display:none">
+            <button class="modal-close-btn" aria-label="Закрыть">✕</button>
+            <h2 class="modal-title">Новый пароль</h2>
+            <p class="modal-subtitle">Придумайте надёжный пароль — не менее 6 символов.</p>
+            <input id="new-pass-input"    class="modal-input" type="password" placeholder="Новый пароль *" autocomplete="new-password">
+            <input id="new-pass-confirm"  class="modal-input" type="password" placeholder="Повторите пароль *" autocomplete="new-password">
+            <button id="new-pass-submit-btn" class="modal-btn">Сохранить</button>
         </div>
 
     </div><!-- /modal-overlay -->

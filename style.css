@@ -814,8 +814,9 @@ svg {
         font-size: clamp(18px, 5.5vw, 32px);
     }
 
+    /* Хедер: логотип слева, иконка справа, телефон скрыт */
     .header-phone {
-        font-size: 0.85rem;
+        display: none;
     }
 
     .cards-grid,
@@ -865,10 +866,7 @@ svg {
 
 /* ── Profile icon in header ── */
 .profile-icon-btn {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
+    position: relative;
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -1144,12 +1142,15 @@ svg {
 
 /* ── Bonus popup ── */
 .modal-bonus-box {
-    max-width: 390px;
+    max-width: 400px;
     overflow: hidden;
     padding: 0;
     text-align: center;
-    background: linear-gradient(160deg, #0a1e48 0%, #071232 100%);
-    border-color: rgba(255, 210, 60, 0.25);
+    background: linear-gradient(155deg, #07163a 0%, #050e28 50%, #0a1e3d 100%);
+    border-color: rgba(255, 210, 60, 0.3);
+    box-shadow: 0 32px 80px rgba(0, 0, 0, 0.65),
+                0 0 0 1px rgba(255, 210, 60, 0.08),
+                0 0 60px rgba(255, 185, 0, 0.08) !important;
 }
 .bonus-canvas {
     position: absolute;
@@ -1162,28 +1163,74 @@ svg {
 .bonus-content {
     position: relative;
     z-index: 2;
-    padding: 48px 32px 38px;
+    padding: 52px 36px 42px;
+}
+/* Декоративное свечение за цифрами */
+.bonus-amount-wrap {
+    position: relative;
+    display: inline-block;
+    margin-bottom: 2px;
+}
+.bonus-amount-wrap::before {
+    content: '';
+    position: absolute;
+    inset: -20px -30px;
+    background: radial-gradient(ellipse 80% 70% at 50% 50%,
+        rgba(255, 200, 0, 0.18) 0%,
+        rgba(255, 160, 0, 0.06) 50%,
+        transparent 80%);
+    pointer-events: none;
+    border-radius: 50%;
+    z-index: 0;
 }
 .bonus-amount {
-    font-size: 4rem;
+    position: relative;
+    z-index: 1;
+    font-size: 5.2rem;
     font-weight: 900;
     color: var(--white-pure);
     line-height: 1;
-    letter-spacing: -2px;
+    letter-spacing: -3px;
     margin-bottom: 0;
+    /* Прозрачный градиентный текст */
+    background: linear-gradient(160deg, #ffffff 30%, rgba(255, 230, 120, 0.85) 70%, #FFD700 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    filter: drop-shadow(0 0 18px rgba(255, 200, 0, 0.35));
 }
-.bonus-currency { font-size: 2.8rem; color: #FFD700; }
+.bonus-currency {
+    font-size: 3.4rem;
+    background: linear-gradient(160deg, #FFD700 0%, #f0a800 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 14px rgba(255, 185, 0, 0.5));
+}
 .bonus-title {
-    font-size: 1.05rem;
-    font-weight: 600;
+    font-size: 1.1rem;
+    font-weight: 700;
     color: var(--ice-light);
-    margin: 8px 0 4px;
+    margin: 10px 0 5px;
+    letter-spacing: -0.2px;
 }
 .bonus-subtitle {
-    font-size: 0.78rem;
-    color: rgba(154, 187, 213, 0.7);
-    margin-bottom: 28px;
+    font-size: 0.75rem;
+    color: rgba(154, 187, 213, 0.6);
+    margin-bottom: 30px;
     line-height: 1.5;
+    letter-spacing: 0.2px;
+}
+/* Тонкая разделительная линия */
+.bonus-content::before {
+    content: '';
+    display: block;
+    width: 48px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 200, 0, 0.5), transparent);
+    margin: 0 auto 22px;
+    border-radius: 2px;
 }
 .bonus-get-btn {
     background: linear-gradient(135deg, #FFD700 0%, #f0a800 100%) !important;
@@ -1196,26 +1243,34 @@ svg {
 .bonus-close-link {
     display: block;
     margin-top: 14px;
-    font-size: 0.78rem;
-    color: rgba(154, 187, 213, 0.55);
+    font-size: 0.75rem;
+    color: rgba(154, 187, 213, 0.45);
     background: none;
     border: none;
     cursor: pointer;
     font-family: var(--font);
     transition: color 0.2s;
+    letter-spacing: 0.3px;
 }
 .bonus-close-link:hover { color: var(--ice); }
 
 /* ── Mobile responsive ── */
 @media (max-width: 480px) {
-    .modal-overlay { padding: 12px; align-items: flex-end; }
+    .modal-overlay {
+        padding: 16px;
+        align-items: center;
+        justify-content: center;
+    }
     .modal-box {
         padding: 28px 20px 24px;
-        border-radius: 20px 20px 0 0;
+        border-radius: 20px;
         max-width: 100%;
+        max-height: 90dvh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
     .modal-alert-box { border-radius: 20px; max-width: 100%; }
-    .modal-bonus-box { border-radius: 20px 20px 0 0; }
+    .modal-bonus-box { border-radius: 20px; }
     .modal-input { font-size: 16px; } /* prevents iOS zoom */
     .modal-btn  { font-size: 1rem; padding: 16px; }
     .modal-btn-secondary,

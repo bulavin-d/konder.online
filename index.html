@@ -340,8 +340,8 @@
             <p class="modal-subtitle">🎁 2&nbsp;000&nbsp;₸ бонусами каждому новому клиенту</p>
             <input id="reg-name"  class="modal-input" type="text"     placeholder="Ваше имя *" autocomplete="name">
             <input id="reg-email" class="modal-input" type="email"    placeholder="Email *" autocomplete="email">
+            <input id="reg-phone" class="modal-input" type="tel"      placeholder="+7 --- --- -- --" autocomplete="tel">
             <input id="reg-pass"  class="modal-input" type="password" placeholder="Пароль (мин. 6 символов) *" autocomplete="new-password">
-            <input id="reg-phone" class="modal-input" type="tel"      placeholder="Номер телефона" autocomplete="tel">
             <button id="reg-submit-btn" class="modal-btn">Зарегистрироваться</button>
             <p class="modal-footer-text">Уже есть аккаунт? <a href="#" data-switch="modal-login">Войти</a></p>
         </div>
@@ -378,6 +378,7 @@
             <button class="modal-close-btn" aria-label="Закрыть">✕</button>
             <h2 class="modal-title">Личный кабинет.</h2>
             <p class="modal-greeting">Привет, <span id="profile-name"></span>!</p>
+            <p class="profile-phone-row">📱 <span id="profile-phone"></span></p>
             <div class="profile-balance-wrap">
                 <div class="profile-balance-num"><span id="profile-balance">0</span>&nbsp;<span class="balance-currency">₸</span></div>
                 <div class="profile-balance-label">бонусный баланс</div>
@@ -388,7 +389,6 @@
                     </div>
                 </div>
             </div>
-            <p class="profile-phone-row">📱 <span id="profile-phone"></span></p>
             <button id="profile-reset-btn" class="modal-btn-secondary">Сбросить пароль</button>
             <button id="profile-signout-btn" class="modal-btn-signout">Выйти</button>
         </div>
@@ -401,8 +401,8 @@
                 <div class="bonus-badge">ПОДАРОК НОВОМУ КЛИЕНТУ</div>
                 <div class="bonus-amount">2&nbsp;000 <span class="bonus-currency">₸</span></div>
                 <div class="bonus-divider"></div>
-                <p class="bonus-title">бонусами на любую услугу</p>
-                <p class="bonus-subtitle">Начисляются сразу после регистрации</p>
+                <p class="bonus-title">Вы получили 2&nbsp;000&nbsp;₸ бонусами,<br>которые можно потратить на любую услугу.</p>
+                <p class="bonus-subtitle">Бонусы начисляются сразу после регистрации.</p>
                 <button id="bonus-get-btn" class="modal-btn bonus-get-btn">Получить бонусы</button>
             </div>
         </div>

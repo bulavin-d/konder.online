@@ -1137,7 +1137,7 @@ svg {
 .profile-phone-row {
     font-size: 0.85rem;
     color: var(--txt2-on-dark);
-    margin-bottom: 16px;
+    margin-bottom: 14px;
 }
 
 /* ── Bonus popup ── */
@@ -1200,10 +1200,11 @@ svg {
     margin: 16px auto 14px;
 }
 .bonus-title {
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 0.9rem;
+    font-weight: 500;
     color: var(--ice-light);
     margin: 0 0 6px;
+    line-height: 1.55;
     letter-spacing: -0.1px;
 }
 .bonus-subtitle {

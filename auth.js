@@ -87,7 +87,9 @@ function doSignUp() {
     var name  = document.getElementById('reg-name').value.trim();
     var email = document.getElementById('reg-email').value.trim();
     var pass  = document.getElementById('reg-pass').value;
-    var phone = document.getElementById('reg-phone').value.trim();
+    /* Нормализуем телефон: только цифры со знаком + */
+    var rawPhone = document.getElementById('reg-phone').value.trim();
+    var phone = rawPhone ? '+' + rawPhone.replace(/\D/g, '').replace(/^8/, '7') : '';
 
     if (!name || !email || !pass) { showAlert('Заполните обязательные поля (имя, email, пароль).'); return; }
     if (pass.length < 6)          { showAlert('Пароль должен быть не менее 6 символов.'); return; }
@@ -386,8 +388,34 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    /* ── Register ── */
-    var regBtn = document.getElementById('reg-submit-btn');
+    /* ── Phone mask: всегда +7 ── */
+    var regPhone = document.getElementById('reg-phone');
+    if (regPhone) {
+        regPhone.addEventListener('focus', function() {
+            if (!this.value) this.value = '+7 ';
+        });
+        regPhone.addEventListener('input', function() {
+            var val = this.value.replace(/\D/g, '');
+            /* Если начали с 8 или 7 — заменяем на 7 */
+            if (val.startsWith('8')) val = '7' + val.slice(1);
+            if (!val.startsWith('7')) val = '7' + val;
+            val = val.slice(0, 11);
+            /* Форматируем: +7 XXX XXX XX XX */
+            var d = val.slice(1); /* убираем 7 */
+            var fmt = '+7';
+            if (d.length > 0) fmt += ' ' + d.slice(0,3);
+            if (d.length > 3) fmt += ' ' + d.slice(3,6);
+            if (d.length > 6) fmt += ' ' + d.slice(6,8);
+            if (d.length > 8) fmt += ' ' + d.slice(8,10);
+            this.value = fmt;
+        });
+        regPhone.addEventListener('keydown', function(e) {
+            /* Не даём удалить префикс +7 */
+            if ((e.key === 'Backspace' || e.key === 'Delete') && this.value === '+7 ') {
+                e.preventDefault();
+            }
+        });
+    }
     if (regBtn) regBtn.addEventListener('click', doSignUp);
     document.getElementById('reg-pass') && document.getElementById('reg-pass').addEventListener('keydown', function(e) {
         if (e.key === 'Enter') doSignUp();

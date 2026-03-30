@@ -1,5 +1,5 @@
-﻿/* =============================================
-   KONDER.ONLINE — style.css v9
+/* =============================================
+   KONDER.ONLINE � style.css v9
    Premium navy/ice-blue redesign from logo
    ============================================= */
 
@@ -82,7 +82,7 @@ svg {
 }
 
 /* ============================================================
-   HEADER — frosted glass over dark hero
+   HEADER � frosted glass over dark hero
    ============================================================ */
 .header {
     position: fixed;
@@ -138,7 +138,7 @@ svg {
 }
 
 /* ============================================================
-   HERO — full logo-style canvas
+   HERO � full logo-style canvas
    ============================================================ */
 .hero {
     position: relative;
@@ -160,14 +160,21 @@ svg {
     width: 100%;
     height: 100%;
     z-index: 1;
-    /* Prevent canvas from capturing touch events → no ribbon glitch on scroll */
+    /* Prevent canvas from capturing touch events > no ribbon glitch on scroll */
     touch-action: none;
     pointer-events: none;
 }
 
 .hero {
-    /* Kill rubber-band overscroll that shifts canvas coordinates on iOS */
-    overscroll-behavior: none;
+    /* Keep wheel scroll chaining on desktop. */
+    overscroll-behavior-y: auto;
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .hero {
+        /* iOS/Android: reduce bounce while preserving desktop wheel scroll. */
+        overscroll-behavior: none;
+    }
 }
 
 .hero-content {
@@ -217,7 +224,7 @@ svg {
 }
 
 /* ============================================================
-   SECTIONS — alternating backgrounds
+   SECTIONS � alternating backgrounds
    ============================================================ */
 .section {
     position: relative;
@@ -226,7 +233,7 @@ svg {
     z-index: 10;
 }
 
-/* Services section — brighter navy for visual separation */
+/* Services section � brighter navy for visual separation */
 #services {
     background:
         radial-gradient(ellipse 80% 60% at 50% 0%, rgba(77, 168, 240, 0.08) 0%, transparent 70%),
@@ -278,7 +285,7 @@ svg {
     border-color: var(--glass-border-dark);
 }
 
-/* Extra services — dark continuation */
+/* Extra services � dark continuation */
 #extra {
     background: var(--navy);
 }
@@ -328,9 +335,102 @@ svg {
     border-color: var(--glass-border-dark);
 }
 
+/* FAQ section — same visual language as service cards */
+#faq {
+    background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(77, 168, 240, 0.08) 0%, transparent 70%),
+        linear-gradient(180deg, #1c3d68 0%, #1f4570 50%, #1c3d68 100%);
+}
+
+#faq .section-title {
+    color: var(--white-pure);
+}
+
+#faq .section-sub {
+    color: var(--txt2-on-dark);
+    text-wrap: pretty;
+}
+
+#faq p {
+    text-wrap: pretty;
+}
+
+#faq .faq-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#faq .faq-card {
+    background: rgba(25, 50, 88, 0.65);
+    border-color: rgba(77, 168, 240, 0.18);
+    text-align: left;
+    padding: 32px 26px 24px;
+}
+
+#faq .faq-icon {
+    margin: 0 0 18px;
+    width: 48px;
+    height: 48px;
+    background: rgba(77, 168, 240, 0.15);
+    color: var(--ice);
+}
+
+#faq .faq-card:hover {
+    border-color: rgba(77, 168, 240, 0.4);
+    box-shadow: 0 16px 48px rgba(77, 168, 240, 0.18),
+        0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+#faq .faq-question {
+    color: var(--ice-light);
+    font-size: 1rem;
+    line-height: 1.45;
+    margin-bottom: 0;
+    text-wrap: pretty;
+}
+
+#faq .card-sep {
+    width: 40px;
+    margin: 14px 0 12px;
+    background: rgba(77, 168, 240, 0.24);
+}
+
+#faq .faq-answer {
+    color: var(--txt2-on-dark);
+    font-size: 0.82rem;
+    line-height: 1.68;
+    margin: 0;
+}
+
+#faq .faq-answer-next {
+    margin-top: 10px;
+}
+
+@media (max-width: 768px) {
+    #faq .faq-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #faq .faq-card {
+        padding: 28px 22px 22px;
+    }
+}
+
 /* Stats/trust section — slightly different navy shade for separation */
 #trust {
+    position: relative;
     background: linear-gradient(180deg, var(--navy-light) 0%, var(--navy-mid) 100%);
+}
+
+#trust::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(1200px, calc(100% - (var(--layout-x) * 2)));
+    height: 1px;
+    background: linear-gradient(90deg, rgba(77, 168, 240, 0), rgba(77, 168, 240, 0.58), rgba(77, 168, 240, 0));
+    opacity: 0.92;
 }
 
 #trust .section-title {
@@ -382,7 +482,7 @@ svg {
 }
 
 /* ============================================================
-   CARDS GRID — glassmorphism with enhanced hover
+   CARDS GRID � glassmorphism with enhanced hover
    ============================================================ */
 .cards-grid {
     display: grid;
@@ -578,7 +678,7 @@ svg {
 }
 
 /* ============================================================
-   «ЕЩЁ УСЛУГИ» — divider toggle
+   ��٨ �����Ȼ � divider toggle
    ============================================================ */
 .more-sec {
     padding-top: 20px;
@@ -634,7 +734,7 @@ svg {
 }
 
 /* ============================================================
-   STATS — 4 columns with shimmer
+   STATS � 4 columns with shimmer
    ============================================================ */
 .stats-section {
     padding: 80px 0;
@@ -698,7 +798,7 @@ svg {
 }
 
 /* ============================================================
-   FOOTER — 3-column layout: geo | socials | phone
+   FOOTER � 3-column layout: geo | socials | phone
    ============================================================ */
 .footer {
     padding: 40px var(--layout-x);
@@ -759,7 +859,7 @@ svg {
 }
 
 /* ============================================================
-   REVEAL — scroll-triggered animations
+   REVEAL � scroll-triggered animations
    ============================================================ */
 .reveal {
     opacity: 0;
@@ -818,7 +918,7 @@ svg {
         font-size: clamp(18px, 5.5vw, 32px);
     }
 
-    /* Хедер: логотип слева, иконка справа, телефон скрыт */
+    /* �����: ������� �����, ������ ������, ������� ����� */
     .header-phone {
         display: none;
     }
@@ -865,10 +965,10 @@ svg {
     }
 }
 /* ============================================================
-   AUTH / BONUS SYSTEM — добавлено поверх существующих стилей
+   AUTH / BONUS SYSTEM � ��������� ������ ������������ ������
    ============================================================ */
 
-/* ── Profile icon in header ── */
+/* -- Profile icon in header -- */
 .profile-icon-btn {
     position: relative;
     width: 40px;
@@ -901,7 +1001,7 @@ svg {
     box-shadow: 0 0 14px rgba(77, 168, 240, 0.35);
 }
 
-/* ── Modal overlay ── */
+/* -- Modal overlay -- */
 .modal-overlay {
     position: fixed;
     inset: 0;
@@ -915,7 +1015,7 @@ svg {
     padding: 20px;
 }
 
-/* ── Modal box (shared) ── */
+/* -- Modal box (shared) -- */
 .modal-box {
     background: rgba(10, 24, 52, 0.97);
     border: 1px solid rgba(77, 168, 240, 0.22);
@@ -968,7 +1068,7 @@ svg {
     line-height: 1.5;
 }
 
-/* ── Inputs ── */
+/* -- Inputs -- */
 .modal-input {
     display: block;
     width: 100%;
@@ -990,7 +1090,7 @@ svg {
     background: rgba(255, 255, 255, 0.08);
 }
 
-/* ── Buttons ── */
+/* -- Buttons -- */
 .modal-btn {
     display: block;
     width: 100%;
@@ -1060,7 +1160,7 @@ svg {
 }
 .modal-footer-text a:hover { color: var(--blue); }
 
-/* ── Alert modal ── */
+/* -- Alert modal -- */
 .modal-alert-box { text-align: center; padding: 40px 32px 32px; max-width: 380px; }
 .modal-alert-text {
     font-size: 0.95rem;
@@ -1070,7 +1170,7 @@ svg {
     white-space: pre-line;
 }
 
-/* ── Profile modal ── */
+/* -- Profile modal -- */
 .modal-greeting {
     font-size: 1.05rem;
     color: var(--ice-light);
@@ -1144,7 +1244,7 @@ svg {
     margin-bottom: 14px;
 }
 
-/* ── Bonus popup ── */
+/* -- Bonus popup -- */
 .modal-bonus-box {
     max-width: 380px;
     overflow: hidden;
@@ -1168,7 +1268,7 @@ svg {
     z-index: 2;
     padding: 44px 36px 40px;
 }
-/* Бейджик сверху */
+/* ������� ������ */
 .bonus-badge {
     display: inline-block;
     font-size: 0.62rem;
@@ -1181,7 +1281,7 @@ svg {
     padding: 4px 12px;
     margin-bottom: 22px;
 }
-/* Большая сумма — чисто, без казино */
+/* ������� ����� � �����, ��� ������ */
 .bonus-amount {
     font-size: 5rem;
     font-weight: 900;
@@ -1196,7 +1296,7 @@ svg {
     color: #e8b400;
     letter-spacing: 0;
 }
-/* Разделитель */
+/* ����������� */
 .bonus-divider {
     width: 36px;
     height: 1px;
@@ -1421,7 +1521,7 @@ svg {
     box-shadow: 0 10px 28px rgba(255, 176, 67, 0.44) !important;
     transform: translateY(-1px) !important;
 }
-/* ── Mobile responsive ── */
+/* -- Mobile responsive -- */
 @media (max-width: 480px) {
     .modal-overlay {
         padding: 16px;
@@ -1458,6 +1558,8 @@ svg {
     .service-subtitle { font-size: 0.78rem; }
     .service-pill { font-size: 0.66rem; }
 }
+
+
 
 
 

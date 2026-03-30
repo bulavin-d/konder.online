@@ -1324,11 +1324,22 @@ svg {
 }
 .promo-pill {
     margin-top: 12px;
-    width: fit-content;
-    min-height: 44px;
-    padding: 7px 10px;
+    width: 100%;
+    min-height: 48px;
+    padding: 8px 14px;
+    box-sizing: border-box;
+    justify-content: space-between;
+    gap: 10px;
     background: rgba(7, 17, 31, 0.76);
     border-color: rgba(188, 224, 246, 0.35);
+}
+.promo-pill .pl {
+    width: 40px;
+    height: 40px;
+}
+.promo-pill .pl svg {
+    width: 18px;
+    height: 18px;
 }
 .modal-service-box .promo-pill {
     background: rgba(19, 22, 29, 0.82);
@@ -1443,4 +1454,5 @@ svg {
     .service-subtitle { font-size: 0.78rem; }
     .service-pill { font-size: 0.66rem; }
 }
+
 

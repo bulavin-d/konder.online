@@ -766,25 +766,29 @@ function promoTypeLabel(type) {
 }
 
 function loadPromoState() {
-    sb.from('settings').select('value').eq('key','promo_enabled').single().then(function(r) {
-        var on = !!(r.data && r.data.value === 'true');
+    sb.rpc('get_promo_settings').then(function(r) {
+        if (r.error || !r.data) {
+            showMsg('promo-msg', 'Ошибка чтения настроек промо: ' + (r.error ? r.error.message : 'нет данных'), false);
+            return;
+        }
+
+        var row = Array.isArray(r.data) ? r.data[0] : r.data;
+        if (!row) return;
+
+        var on = !!row.promo_enabled;
+        var type = normalizePromoType(row.promo_popup_type);
+
         document.getElementById('promo-toggle').checked = on;
         document.getElementById('s-promo').textContent  = on ? 'ВКЛ' : 'ВЫКЛ';
-    });
 
-    loadPromoType();
+        var select = document.getElementById('promo-type');
+        if (select) select.value = type;
+        document.getElementById('s-promo-type').textContent = promoTypeLabel(type);
+    });
 }
 
 function loadPromoType() {
-    var select = document.getElementById('promo-type');
-    var state = document.getElementById('s-promo-type');
-    if (!select || !state) return;
-
-    sb.from('settings').select('value').eq('key','promo_popup_type').single().then(function(r) {
-        var type = normalizePromoType(r.data && r.data.value ? r.data.value : 'bonus');
-        select.value = type;
-        state.textContent = promoTypeLabel(type);
-    });
+    loadPromoState();
 }
 
 function setPromoType(value) {
@@ -792,10 +796,10 @@ function setPromoType(value) {
     var select = document.getElementById('promo-type');
     document.getElementById('s-promo-type').textContent = promoTypeLabel(type);
 
-    sb.from('settings').upsert({ key: 'promo_popup_type', value: type }, { onConflict: 'key' }).then(function(r) {
+    sb.rpc('set_promo_popup_type', { p_type: type }).then(function(r) {
         if (r.error) {
             showMsg('promo-type-msg', 'Ошибка: ' + r.error.message, false);
-            if (select) loadPromoType();
+            if (select) loadPromoState();
             return;
         }
         showMsg('promo-type-msg', '✅ Тип поп-апа сохранён', true);

@@ -1,4 +1,4 @@
-/* =============================================
+﻿/* =============================================
    KONDER.ONLINE - auth.js
    Supabase Auth + Promo Popups
    ============================================= */
@@ -11,11 +11,22 @@ var sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 /* Modal state */
 var _activeModal = null;
 
+function resetPromoContactState() {
+    document.querySelectorAll('.promo-pill.open').forEach(function(pill) {
+        pill.classList.remove('open');
+    });
+    document.querySelectorAll('.promo-contact-btn.hidden').forEach(function(btn) {
+        btn.classList.remove('hidden');
+    });
+}
+
+
 function openModal(id) {
     var overlay = document.getElementById('modal-overlay');
     if (!overlay) return;
     var boxes = overlay.querySelectorAll('.modal-box');
     boxes.forEach(function(b) { b.style.display = 'none'; });
+    resetPromoContactState();
 
     var target = document.getElementById(id);
     if (!target) return;
@@ -29,6 +40,7 @@ function openModal(id) {
 function closeModal() {
     var overlay = document.getElementById('modal-overlay');
     if (overlay) overlay.style.display = 'none';
+    resetPromoContactState();
     document.body.style.overflow = '';
     _activeModal = null;
 }
@@ -284,22 +296,31 @@ function tryShowBonusPopup() {
     sb.auth.getSession().then(function(res) {
         if (res.data && res.data.session) return;
 
-        sb.from('settings').select('key,value').in('key', ['promo_enabled', 'promo_popup_type']).then(function(cfg) {
-            if (cfg.error) {
-                sb.from('settings').select('value').eq('key', 'promo_enabled').single().then(function(oldCfg) {
-                    if (oldCfg.data && oldCfg.data.value === 'true' && !isPromoClosed('bonus')) {
-                        openPromoPopup('bonus');
-                    }
+        sb.rpc('get_promo_settings').then(function(cfg) {
+            if (cfg.error || !cfg.data) {
+                /* Fallback на старую схему, если RPC еще не установлен */
+                sb.from('settings').select('key,value').in('key', ['promo_enabled', 'promo_popup_type']).then(function(legacy) {
+                    if (legacy.error || !legacy.data) return;
+
+                    var enabledLegacy = false;
+                    var typeLegacy = 'bonus';
+                    legacy.data.forEach(function(item) {
+                        if (item.key === 'promo_enabled') enabledLegacy = item.value === 'true';
+                        if (item.key === 'promo_popup_type') typeLegacy = normalizePopupType(item.value);
+                    });
+
+                    if (!enabledLegacy) return;
+                    if (isPromoClosed(typeLegacy)) return;
+                    openPromoPopup(typeLegacy);
                 });
                 return;
             }
 
-            var enabled = false;
-            var popupType = 'bonus';
-            (cfg.data || []).forEach(function(item) {
-                if (item.key === 'promo_enabled') enabled = item.value === 'true';
-                if (item.key === 'promo_popup_type') popupType = normalizePopupType(item.value);
-            });
+            var row = Array.isArray(cfg.data) ? cfg.data[0] : cfg.data;
+            if (!row) return;
+
+            var enabled = !!row.promo_enabled;
+            var popupType = normalizePopupType(row.promo_popup_type);
 
             if (!enabled) return;
             if (isPromoClosed(popupType)) return;
@@ -334,10 +355,11 @@ function getWeatherText(code) {
 
 function getWeatherSlogan(tempC) {
     var t = Math.round(tempC);
-    if (t >= 34) return 'На улице ' + t + '°C. Самое время включить холодный комфорт дома.';
-    if (t >= 28) return 'В Алматы ' + t + '°C. Кондиционер добавит ровно ту прохладу, что нужна.';
-    if (t >= 22) return 'Сейчас ' + t + '°C. Подготовьте кондиционер заранее к жарким дням.';
-    return 'Сегодня ' + t + '°C. Проверьте кондиционер сейчас, чтобы летом не ждать сервис.';
+    if (t >= 34) return 'На улице сильная жара. Проверьте кондиционер, чтобы дома было комфортно.';
+    if (t >= 28) return 'Жаркий день в Алматы — кондиционер должен работать без сбоев.';
+    if (t >= 25) return 'На улице жара. Ваш кондиционер готов к нагрузке?';
+    if (t >= 19) return 'Проверьте кондиционер сейчас, чтобы летом не ждать сервис.';
+    return 'Сделайте профилактику заранее — в жару техника должна работать уверенно.';
 }
 
 function loadAlmatyWeather() {
@@ -755,6 +777,30 @@ document.addEventListener('DOMContentLoaded', function() {
             openModal('modal-register');
         });
     });
+    document.querySelectorAll('.promo-contact-btn').forEach(function(btn) {
+        var pillId = btn.getAttribute('data-pill');
+        var pill = pillId ? document.getElementById(pillId) : null;
+        if (!pill) return;
+
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            var isOpen = pill.classList.contains('open');
+            resetPromoContactState();
+            if (!isOpen) {
+                pill.classList.add('open');
+                btn.classList.add('hidden');
+            }
+        });
+
+        pill.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    });
+
+    document.addEventListener('click', function() {
+        resetPromoContactState();
+    });
 
     document.querySelectorAll('.promo-close-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
@@ -816,3 +862,4 @@ document.addEventListener('DOMContentLoaded', function() {
 
     setTimeout(tryShowBonusPopup, 7000);
 });
+

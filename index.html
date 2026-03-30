@@ -393,17 +393,55 @@
             <button id="profile-signout-btn" class="modal-btn-signout">Выйти</button>
         </div>
 
-        <!-- Бонусный поп-ап (Lead Magnet) -->
+                <!-- Бонусный поп-ап (Lead Magnet) -->
         <div id="modal-bonus" class="modal-box modal-bonus-box" style="display:none">
-            <button id="bonus-close-btn" class="modal-close-btn" aria-label="Закрыть">✕</button>
+            <button id="bonus-close-btn" class="modal-close-btn promo-close-btn" data-promo-close="bonus" aria-label="Закрыть">✕</button>
             <canvas id="bonus-canvas" class="bonus-canvas"></canvas>
             <div class="bonus-content">
                 <div class="bonus-badge">ПОДАРОК НОВОМУ КЛИЕНТУ</div>
                 <div class="bonus-amount">2&nbsp;000 <span class="bonus-currency">₸</span></div>
                 <div class="bonus-divider"></div>
-                <p class="bonus-title">Вы получили 2&nbsp;000&nbsp;₸ бонусами,<br>которые можно потратить на любую услугу.</p>
+                <p class="bonus-title">
+                    <span class="bonus-title-line">2&nbsp;000&nbsp;₸ бонусами для старта</span>
+                    <span class="bonus-title-line">Тратьте их на любую услугу</span>
+                </p>
                 <p class="bonus-subtitle">Бонусы начисляются сразу после регистрации.</p>
-                <button id="bonus-get-btn" class="modal-btn bonus-get-btn">Получить бонусы</button>
+                <button id="bonus-get-btn" class="modal-btn bonus-get-btn promo-cta-btn">Получить бонусы</button>
+            </div>
+        </div>
+
+        <!-- Погода в Алматы + кондиционер -->
+        <div id="modal-weather" class="modal-box modal-weather-box" style="display:none" data-weather="sunny">
+            <button class="modal-close-btn promo-close-btn" data-promo-close="weather" aria-label="Закрыть">✕</button>
+            <canvas id="weather-canvas" class="weather-canvas"></canvas>
+            <div class="weather-content">
+                <div class="weather-badge">АЛМАТЫ СЕЙЧАС</div>
+                <div class="weather-row">
+                    <div class="weather-temp"><span id="weather-temp">--</span><span class="weather-unit">°C</span></div>
+                    <div class="weather-meta">
+                        <div id="weather-desc" class="weather-desc">Загружаем погоду...</div>
+                        <div id="weather-wind" class="weather-wind">Ветер: -- км/ч</div>
+                    </div>
+                </div>
+                <div class="weather-divider"></div>
+                <p id="weather-slogan" class="weather-slogan">Алматы греет, а мы охлаждаем с умом.</p>
+                <button class="modal-btn weather-cta-btn promo-cta-btn">Подобрать кондиционер</button>
+            </div>
+        </div>
+
+        <!-- Сервисный поп-ап -->
+        <div id="modal-service" class="modal-box modal-service-box" style="display:none">
+            <button class="modal-close-btn promo-close-btn" data-promo-close="service" aria-label="Закрыть">✕</button>
+            <div class="service-content">
+                <div class="service-badge">СЕЗОННЫЙ СЕРВИС</div>
+                <div class="service-title">Тихий климат без лишних трат</div>
+                <p class="service-subtitle">При установке дарим базовую чистку внутреннего блока и проверку дренажа.</p>
+                <div class="service-pills">
+                    <span class="service-pill">Выезд за 60 минут</span>
+                    <span class="service-pill">Гарантия 12 месяцев</span>
+                    <span class="service-pill">Чисто после монтажа</span>
+                </div>
+                <button class="modal-btn service-cta-btn promo-cta-btn">Записаться на установку</button>
             </div>
         </div>
 

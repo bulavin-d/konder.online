@@ -122,7 +122,7 @@ body {
    INPUTS
 ═══════════════════════════════════════ */
 input[type=text], input[type=number], input[type=tel],
-input[type=email], input[type=password] {
+input[type=email], input[type=password], select {
     display:block; width:100%;
     padding:13px 16px;
     background:rgba(255,255,255,0.05);
@@ -133,8 +133,9 @@ input[type=email], input[type=password] {
     transition:border-color .25s, background .25s;
 }
 input::placeholder { color:rgba(154,187,213,0.35); }
-input:focus { border-color:rgba(77,168,240,0.5); background:rgba(255,255,255,0.07); }
-@media (max-width:480px) { input { font-size:16px; } }
+select option { color:#0d1f35; }
+input:focus, select:focus { border-color:rgba(77,168,240,0.5); background:rgba(255,255,255,0.07); }
+@media (max-width:480px) { input, select { font-size:16px; } }
 
 /* ═══════════════════════════════════════
    BUTTONS
@@ -354,6 +355,13 @@ tbody td { padding:11px 10px; vertical-align:middle; }
    TOGGLE
 ═══════════════════════════════════════ */
 .tgl-row { display:flex; align-items:center; justify-content:space-between; gap:14px; }
+.set-meta {
+    font-size:.78rem; color:var(--txt2);
+    padding:9px 12px; border-radius:10px;
+    border:1px solid rgba(77,168,240,.18);
+    background:rgba(77,168,240,.08);
+}
+.set-meta b { color:#fff; font-weight:700; }
 .tgl-label { font-size:.88rem; color:var(--txt); line-height:1.5; }
 .tgl-label small { display:block; font-size:.72rem; color:var(--txt2); margin-top:2px; }
 .tgl-sw { position:relative; width:50px; height:26px; flex-shrink:0; cursor:pointer; }
@@ -370,38 +378,6 @@ tbody td { padding:11px 10px; vertical-align:middle; }
     box-shadow:0 2px 5px rgba(0,0,0,.3); pointer-events:none;
 }
 .tgl-sw input:checked ~ .tgl-thumb { transform:translateX(24px); }
-
-/* ═══════════════════════════════════════
-   SQL SETUP SECTION
-═══════════════════════════════════════ */
-.sql-step {
-    background:rgba(232,180,0,.06); border:1px solid rgba(232,180,0,.18);
-    border-radius:14px; padding:16px; margin-bottom:12px;
-}
-.sql-step-num {
-    display:inline-flex; align-items:center; justify-content:center;
-    width:22px; height:22px; border-radius:50%;
-    background:var(--amber); color:#0d1820; font-size:.7rem; font-weight:900;
-    margin-bottom:8px;
-}
-.sql-step-title { font-size:.88rem; font-weight:700; color:#fff; margin-bottom:6px; }
-.sql-step p { font-size:.78rem; color:var(--txt2); line-height:1.6; }
-.sql-block {
-    background:rgba(0,0,0,.4); border:1px solid rgba(77,168,240,.15);
-    border-radius:10px; padding:12px 14px; margin-top:10px;
-    font-size:.72rem; font-family:'Courier New', monospace;
-    color:#7dd3fc; line-height:1.7; overflow-x:auto; white-space:pre;
-    position:relative;
-}
-.copy-btn {
-    position:absolute; top:8px; right:8px;
-    font-size:.65rem; font-weight:700; padding:3px 10px;
-    border-radius:50px; border:1px solid rgba(77,168,240,.3);
-    background:rgba(77,168,240,.12); color:var(--ice);
-    cursor:pointer; font-family:var(--font); transition:background .15s;
-}
-.copy-btn:hover { background:rgba(77,168,240,.25); }
-.copy-btn.copied { color:var(--green); border-color:rgba(39,181,96,.4); background:rgba(39,181,96,.1); }
 
 /* ═══════════════════════════════════════
    AUTH SCREENS
@@ -616,13 +592,13 @@ tbody td { padding:11px 10px; vertical-align:middle; }
     <!-- ══════════════════════════════
          TAB 3: НАСТРОЙКИ
     ══════════════════════════════ -->
-    <div class="panel" id="tab-settings">
+        <div class="panel" id="tab-settings">
         <div class="card">
-            <div class="card-label">Акция — поп-ап 2 000 ₸</div>
+            <div class="card-label">Акция - поп-апы для новых посетителей</div>
             <div class="tgl-row">
                 <div class="tgl-label">
-                    Показывать поп-ап новым посетителям
-                    <small>Выключено — попап не появится, даже если localStorage очищен</small>
+                    Показывать промо-попап новым посетителям
+                    <small>Выключено - попап не появится, даже если localStorage очищен</small>
                 </div>
                 <label class="tgl-sw">
                     <input type="checkbox" id="promo-toggle" onchange="togglePromo(this.checked)">
@@ -630,81 +606,21 @@ tbody td { padding:11px 10px; vertical-align:middle; }
                     <div class="tgl-thumb"></div>
                 </label>
             </div>
+
+            <div class="row" style="margin-top:14px; align-items:flex-end;">
+                <div style="flex:1; min-width:210px;">
+                    <div class="card-label" style="margin-bottom:8px;">Активный креатив</div>
+                    <select id="promo-type" onchange="setPromoType(this.value)">
+                        <option value="bonus">Бонус 2 000 ₸</option>
+                        <option value="weather">Погода Алматы + кондиционер</option>
+                        <option value="service">Сезонный сервис</option>
+                    </select>
+                </div>
+                <div class="set-meta">Сейчас: <b id="s-promo-type">Бонус 2 000 ₸</b></div>
+            </div>
+
             <div id="promo-msg" class="msg"></div>
-        </div>
-
-        <!-- SQL SETUP -->
-        <div class="card">
-            <div class="card-label">⚡ SQL-настройка Supabase</div>
-            <p style="font-size:.8rem;color:var(--txt2);margin-bottom:16px;line-height:1.6;">
-                Чтобы Admin видел <strong style="color:#fff">всех клиентов</strong> (а не только себя)
-                и мог искать по имени, email и любому формату телефона —
-                нужно выполнить эти SQL-функции в <strong style="color:#fff">Supabase → SQL Editor</strong>.
-                Они работают с повышенными правами (SECURITY DEFINER) и не нарушают RLS остальных пользователей.
-            </p>
-
-            <div class="sql-step">
-                <div class="sql-step-num">1</div>
-                <div class="sql-step-title">Функция: получить всех клиентов</div>
-                <p>Позволяет администратору видеть все профили, обходя RLS.</p>
-                <div class="sql-block" id="sql1">CREATE OR REPLACE FUNCTION get_all_profiles()
-RETURNS TABLE (
-  id uuid, full_name text, phone text,
-  email text, bonus_balance int, created_at timestamptz
-)
-LANGUAGE sql SECURITY DEFINER SET search_path = public AS $$
-  SELECT id, full_name, phone, email, bonus_balance, created_at
-  FROM profiles
-  ORDER BY created_at DESC;
-$$;
-                    <button class="copy-btn" onclick="copySql('sql1',this)">Копировать</button>
-                </div>
-            </div>
-
-            <div class="sql-step">
-                <div class="sql-step-num">2</div>
-                <div class="sql-step-title">Функция: гибкий поиск клиента</div>
-                <p>Поиск по имени, email и телефону — любой формат (87..., +77..., последние 4 цифры).</p>
-                <div class="sql-block" id="sql2">CREATE OR REPLACE FUNCTION search_profiles_flex(q text)
-RETURNS TABLE (
-  id uuid, full_name text, phone text,
-  email text, bonus_balance int
-)
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
-DECLARE
-  digs text := regexp_replace(q, '\D', '', 'g');
-  norm text := CASE WHEN left(digs,1)='8'
-               THEN '7'||substring(digs,2) ELSE digs END;
-BEGIN
-  RETURN QUERY
-  SELECT p.id, p.full_name, p.phone, p.email, p.bonus_balance
-  FROM profiles p
-  WHERE
-    lower(p.full_name) LIKE '%'||lower(q)||'%'
-    OR lower(p.email)  LIKE '%'||lower(q)||'%'
-    OR (length(digs)>=4
-        AND regexp_replace(p.phone,'\D','','g') LIKE '%'||digs)
-    OR (length(norm)>=4
-        AND regexp_replace(p.phone,'\D','','g') LIKE '%'||norm)
-  ORDER BY p.full_name
-  LIMIT 20;
-END;
-$$;
-                    <button class="copy-btn" onclick="copySql('sql2',this)">Копировать</button>
-                </div>
-            </div>
-
-            <div class="sql-step">
-                <div class="sql-step-num">3</div>
-                <div class="sql-step-title">Статистика: суммарно выданные бонусы</div>
-                <p>Опционально — для плашки «Роздано бонусов» считает только позитивные начисления.</p>
-                <div class="sql-block" id="sql3">-- Если нужна точная сумма ВЫДАННЫХ бонусов (не текущий баланс):
--- Можно добавить колонку total_bonuses_given в profiles
--- и инкрементировать её в update_bonus при amount > 0.
--- Либо оставить как есть — плашка покажет суммарный баланс.
-                    <button class="copy-btn" onclick="copySql('sql3',this)">Копировать</button>
-                </div>
-            </div>
+            <div id="promo-type-msg" class="msg"></div>
         </div>
     </div>
 
@@ -741,7 +657,6 @@ var currentProfileId = null;
 var allClients       = [];
 var calcValue        = 0;
 var searchTimer      = null;
-var sqlSetupDone     = false; /* флаг: есть ли search_profiles_flex в БД */
 
 /* ══════════════════════════════════════════
    HELPERS
@@ -823,7 +738,6 @@ function loadStats() {
         }
         allClients = r.data || [];
         setStats(allClients);
-        if (allClients.length > 0) sqlSetupDone = true;
     });
 }
 
@@ -837,15 +751,57 @@ function setStats(data) {
 /* ══════════════════════════════════════════
    PROMO
 ══════════════════════════════════════════ */
+var PROMO_TYPES = ['bonus', 'weather', 'service'];
+
+function normalizePromoType(value) {
+    var t = String(value || '').toLowerCase();
+    return PROMO_TYPES.indexOf(t) !== -1 ? t : 'bonus';
+}
+
+function promoTypeLabel(type) {
+    var t = normalizePromoType(type);
+    if (t === 'weather') return 'Погода Алматы + кондиционер';
+    if (t === 'service') return 'Сезонный сервис';
+    return 'Бонус 2 000 ₸';
+}
+
 function loadPromoState() {
     sb.from('settings').select('value').eq('key','promo_enabled').single().then(function(r) {
-        if (r.data) {
-            var on = r.data.value === 'true';
-            document.getElementById('promo-toggle').checked = on;
-            document.getElementById('s-promo').textContent  = on ? 'ВКЛ' : 'ВЫКЛ';
-        }
+        var on = !!(r.data && r.data.value === 'true');
+        document.getElementById('promo-toggle').checked = on;
+        document.getElementById('s-promo').textContent  = on ? 'ВКЛ' : 'ВЫКЛ';
+    });
+
+    loadPromoType();
+}
+
+function loadPromoType() {
+    var select = document.getElementById('promo-type');
+    var state = document.getElementById('s-promo-type');
+    if (!select || !state) return;
+
+    sb.from('settings').select('value').eq('key','promo_popup_type').single().then(function(r) {
+        var type = normalizePromoType(r.data && r.data.value ? r.data.value : 'bonus');
+        select.value = type;
+        state.textContent = promoTypeLabel(type);
     });
 }
+
+function setPromoType(value) {
+    var type = normalizePromoType(value);
+    var select = document.getElementById('promo-type');
+    document.getElementById('s-promo-type').textContent = promoTypeLabel(type);
+
+    sb.from('settings').upsert({ key: 'promo_popup_type', value: type }, { onConflict: 'key' }).then(function(r) {
+        if (r.error) {
+            showMsg('promo-type-msg', 'Ошибка: ' + r.error.message, false);
+            if (select) loadPromoType();
+            return;
+        }
+        showMsg('promo-type-msg', '✅ Тип поп-апа сохранён', true);
+    });
+}
+
 function togglePromo(enabled) {
     sb.rpc('toggle_promo', { enabled: enabled }).then(function(r) {
         if (r.error) {
@@ -1041,11 +997,9 @@ function loadAllClients() {
     sb.rpc('get_all_profiles').then(function(r) {
         if (r.error) {
             /* RPC не задеплоена — показываем подсказку */
-            showMsg('clients-msg',
-                '⚠️ Нужно выполнить SQL из вкладки «Настройки» чтобы видеть всех клиентов.\n' +
-                'Сейчас RLS ограничивает видимость только вашим профилем.', false);
+            showMsg('clients-msg', '⚠️ Нет доступа к общему списку клиентов. Проверьте RPC get_all_profiles в Supabase.', false);
             tbody.innerHTML = '<tr><td colspan="5"><div class="tbl-empty">' +
-                'Запустите SQL-функции из вкладки ⚙️ Настройки</div></td></tr>';
+                'Настройте RPC get_all_profiles в Supabase и обновите страницу.</div></td></tr>';
             return;
         }
         allClients = r.data || [];
@@ -1102,33 +1056,6 @@ function selectFromTable(id) {
 function updateTableRow(id, newBal) {
     var cell = document.getElementById('tbal-' + id);
     if (cell) cell.innerHTML = newBal.toLocaleString('ru-RU') + '&nbsp;₸';
-}
-
-/* ══════════════════════════════════════════
-   SQL COPY
-══════════════════════════════════════════ */
-function copySql(blockId, btn) {
-    var el = document.getElementById(blockId);
-    /* Вытаскиваем текст без кнопки */
-    var text = el.childNodes[0].textContent.trim();
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(function() {
-            btn.textContent = '✓ Скопировано';
-            btn.classList.add('copied');
-            setTimeout(function() {
-                btn.textContent = 'Копировать';
-                btn.classList.remove('copied');
-            }, 2500);
-        });
-    } else {
-        /* Fallback */
-        var ta = document.createElement('textarea');
-        ta.value = text; document.body.appendChild(ta);
-        ta.select(); document.execCommand('copy');
-        document.body.removeChild(ta);
-        btn.textContent = '✓ Скопировано';
-        setTimeout(function() { btn.textContent = 'Копировать'; }, 2500);
-    }
 }
 
 /* ══════════════════════════════════════════

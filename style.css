@@ -374,6 +374,43 @@ svg {
     color: var(--ice);
 }
 
+#faq .faq-title {
+    margin: 0;
+}
+
+#faq .faq-toggle {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 0;
+    border: 0;
+    margin: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+#faq .faq-toggle:focus-visible {
+    outline: 1px solid rgba(77, 168, 240, 0.55);
+    outline-offset: 6px;
+    border-radius: 12px;
+}
+
+#faq .faq-chevron {
+    flex: 0 0 auto;
+    margin-top: 4px;
+    color: rgba(154, 187, 213, 0.8);
+    transition: transform 0.28s ease, color 0.28s ease;
+}
+
+#faq .faq-card.open .faq-chevron {
+    transform: rotate(180deg);
+    color: var(--ice);
+}
+
 #faq .faq-card:hover {
     border-color: rgba(77, 168, 240, 0.4);
     box-shadow: 0 16px 48px rgba(77, 168, 240, 0.18),
@@ -381,16 +418,26 @@ svg {
 }
 
 #faq .faq-question {
+    display: block;
     color: var(--ice-light);
     font-size: 1rem;
     line-height: 1.45;
-    margin-bottom: 0;
+    margin: 0;
     text-wrap: pretty;
+}
+
+#faq .faq-answer-wrap {
+    display: none;
+    margin-top: 12px;
+}
+
+#faq .faq-card.open .faq-answer-wrap {
+    display: block;
 }
 
 #faq .card-sep {
     width: 40px;
-    margin: 14px 0 12px;
+    margin: 0 0 12px;
     background: rgba(77, 168, 240, 0.24);
 }
 

@@ -1,4 +1,4 @@
-﻿/* =============================================
+/* =============================================
    KONDER.ONLINE — script.js v16
    - Reverted to v13 ridge paths (they were correct)
    - Fixed draw(): uniform thin line, NO gradient = no sperm
@@ -861,7 +861,37 @@ function initReveal(){
 })();
 
 // ============================================================
-//  7. RAF LOOP
+//  7. FAQ — accordion cards
+// ============================================================
+(function(){
+    var toggles=document.querySelectorAll('#faq .faq-toggle');
+    if(!toggles.length) return;
+
+    function setCardState(card,open){
+        if(!card) return;
+        card.classList.toggle('open',open);
+        var btn=card.querySelector('.faq-toggle');
+        if(btn) btn.setAttribute('aria-expanded',open?'true':'false');
+    }
+
+    toggles.forEach(function(btn){
+        btn.addEventListener('click',function(){
+            var card=btn.closest('.faq-card');
+            var shouldOpen=card && !card.classList.contains('open');
+
+            toggles.forEach(function(otherBtn){
+                setCardState(otherBtn.closest('.faq-card'),false);
+            });
+
+            if(shouldOpen){
+                setCardState(card,true);
+            }
+        });
+    });
+})();
+
+// ============================================================
+//  8. RAF LOOP
 // ============================================================
 function renderLoop(time){
     var dt=time-lastTime; lastTime=time;

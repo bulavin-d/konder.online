@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -619,8 +619,23 @@ tbody td { padding:11px 10px; vertical-align:middle; }
                 <div class="set-meta">Сейчас: <b id="s-promo-type">Бонус 2 000 ₸</b></div>
             </div>
 
+            <div class="tgl-row" style="margin-top:14px;">
+                <div class="tgl-label">
+                    Авторасписание поп-апов (12 часов)
+                    <small>08:00-11:59 — Бонус, 12:00-15:59 — Погода, 16:00-19:59 — Сезонный сервис</small>
+                </div>
+                <label class="tgl-sw">
+                    <input type="checkbox" id="promo-schedule-toggle" onchange="togglePromoSchedule(this.checked)">
+                    <div class="tgl-track"></div>
+                    <div class="tgl-thumb"></div>
+                </label>
+            </div>
+
+            <div class="set-meta">Авторасписание: <b id="s-promo-schedule">ВЫКЛ</b></div>
+
             <div id="promo-msg" class="msg"></div>
             <div id="promo-type-msg" class="msg"></div>
+            <div id="promo-schedule-msg" class="msg"></div>
         </div>
     </div>
 
@@ -765,6 +780,15 @@ function promoTypeLabel(type) {
     return 'Бонус 2 000 ₸';
 }
 
+function setPromoTypeControlState(scheduleEnabled) {
+    var select = document.getElementById('promo-type');
+    if (!select) return;
+    select.disabled = !!scheduleEnabled;
+    select.title = scheduleEnabled
+        ? 'При включенном авторасписании тип выбирается автоматически по времени.'
+        : '';
+}
+
 function loadPromoState() {
     sb.rpc('get_promo_settings').then(function(r) {
         if (r.error || !r.data) {
@@ -777,6 +801,7 @@ function loadPromoState() {
 
         var on = !!row.promo_enabled;
         var type = normalizePromoType(row.promo_popup_type);
+        var scheduleOn = !!row.promo_schedule_enabled;
 
         document.getElementById('promo-toggle').checked = on;
         document.getElementById('s-promo').textContent  = on ? 'ВКЛ' : 'ВЫКЛ';
@@ -784,6 +809,11 @@ function loadPromoState() {
         var select = document.getElementById('promo-type');
         if (select) select.value = type;
         document.getElementById('s-promo-type').textContent = promoTypeLabel(type);
+
+        var scheduleToggle = document.getElementById('promo-schedule-toggle');
+        if (scheduleToggle) scheduleToggle.checked = scheduleOn;
+        document.getElementById('s-promo-schedule').textContent = scheduleOn ? 'ВКЛ' : 'ВЫКЛ';
+        setPromoTypeControlState(scheduleOn);
     });
 }
 
@@ -815,6 +845,26 @@ function togglePromo(enabled) {
             document.getElementById('s-promo').textContent = enabled ? 'ВКЛ' : 'ВЫКЛ';
             showMsg('promo-msg', enabled ? '✅ Акция включена' : '⏸ Акция выключена', true);
         }
+    });
+}
+
+function togglePromoSchedule(enabled) {
+    sb.rpc('set_promo_schedule_enabled', { enabled: enabled }).then(function(r) {
+        if (r.error) {
+            showMsg('promo-schedule-msg', 'Ошибка: ' + r.error.message, false);
+            document.getElementById('promo-schedule-toggle').checked = !enabled;
+            return;
+        }
+
+        document.getElementById('s-promo-schedule').textContent = enabled ? 'ВКЛ' : 'ВЫКЛ';
+        setPromoTypeControlState(enabled);
+        showMsg(
+            'promo-schedule-msg',
+            enabled
+                ? '✅ Авторасписание включено: 08:00-11:59 / 12:00-15:59 / 16:00-19:59.'
+                : '⏸ Авторасписание выключено. Работает выбранный вручную креатив.',
+            true
+        );
     });
 }
 
@@ -1097,3 +1147,5 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+
+

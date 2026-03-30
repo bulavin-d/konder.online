@@ -251,10 +251,43 @@ function renderProfileModal(profile) {
 
 /* Promo popup settings */
 var PROMO_POPUP_TYPES = ['bonus', 'weather', 'service'];
+var PROMO_SCHEDULE_SLOTS = [
+    { start: 8,  end: 12, type: 'bonus' },
+    { start: 12, end: 16, type: 'weather' },
+    { start: 16, end: 20, type: 'service' }
+];
 
 function normalizePopupType(value) {
     var v = String(value || '').toLowerCase();
     return PROMO_POPUP_TYPES.indexOf(v) !== -1 ? v : 'bonus';
+}
+
+function getAlmatyHour() {
+    try {
+        var h = new Intl.DateTimeFormat('en-GB', {
+            hour: '2-digit',
+            hour12: false,
+            timeZone: 'Asia/Almaty'
+        }).format(new Date());
+        var hour = parseInt(h, 10);
+        if (isFinite(hour)) return hour;
+    } catch (e) {}
+    return new Date().getHours();
+}
+
+function resolveScheduledPopupType(baseType, scheduleEnabled) {
+    var type = normalizePopupType(baseType);
+    if (!scheduleEnabled) return type;
+
+    var hour = getAlmatyHour();
+    for (var i = 0; i < PROMO_SCHEDULE_SLOTS.length; i++) {
+        var slot = PROMO_SCHEDULE_SLOTS[i];
+        if (hour >= slot.start && hour < slot.end) {
+            return normalizePopupType(slot.type);
+        }
+    }
+
+    return type;
 }
 
 function getPromoCloseKey(type) {
@@ -299,17 +332,20 @@ function tryShowBonusPopup() {
         sb.rpc('get_promo_settings').then(function(cfg) {
             if (cfg.error || !cfg.data) {
                 /* Fallback на старую схему, если RPC еще не установлен */
-                sb.from('settings').select('key,value').in('key', ['promo_enabled', 'promo_popup_type']).then(function(legacy) {
+                sb.from('settings').select('key,value').in('key', ['promo_enabled', 'promo_popup_type', 'promo_schedule_enabled']).then(function(legacy) {
                     if (legacy.error || !legacy.data) return;
 
                     var enabledLegacy = false;
                     var typeLegacy = 'bonus';
+                    var scheduleLegacy = false;
                     legacy.data.forEach(function(item) {
                         if (item.key === 'promo_enabled') enabledLegacy = item.value === 'true';
                         if (item.key === 'promo_popup_type') typeLegacy = normalizePopupType(item.value);
+                        if (item.key === 'promo_schedule_enabled') scheduleLegacy = item.value === 'true';
                     });
 
                     if (!enabledLegacy) return;
+                    typeLegacy = resolveScheduledPopupType(typeLegacy, scheduleLegacy);
                     if (isPromoClosed(typeLegacy)) return;
                     openPromoPopup(typeLegacy);
                 });
@@ -320,7 +356,8 @@ function tryShowBonusPopup() {
             if (!row) return;
 
             var enabled = !!row.promo_enabled;
-            var popupType = normalizePopupType(row.promo_popup_type);
+            var scheduleEnabled = !!row.promo_schedule_enabled;
+            var popupType = resolveScheduledPopupType(row.promo_popup_type, scheduleEnabled);
 
             if (!enabled) return;
             if (isPromoClosed(popupType)) return;
@@ -862,4 +899,5 @@ document.addEventListener('DOMContentLoaded', function() {
 
     setTimeout(tryShowBonusPopup, 7000);
 });
+
 

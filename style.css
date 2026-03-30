@@ -144,11 +144,14 @@ svg {
     position: relative;
     width: 100%;
     min-height: 100vh;
+    min-height: 100svh;
+    height: 100svh;
     display: flex;
     align-items: center;
     justify-content: center;
     padding-top: 70px;
-    background: #051124;
+    background: radial-gradient(circle at 50% 40%, #0a2145 0%, #051124 50%, #02060d 100%);
+    overflow: hidden;
 }
 
 #hero-canvas {
@@ -185,8 +188,9 @@ svg {
     letter-spacing: -1px;
     color: var(--navy-mid);
     opacity: 0;
-    transform: translateY(10px);
-    transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+    transform: translateY(15px);
+    transition: opacity 1s cubic-bezier(0.2, 0.8, 0.2, 1), transform 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+    white-space: nowrap;
 }
 
 .hero-title.visible {
@@ -1454,5 +1458,7 @@ svg {
     .service-subtitle { font-size: 0.78rem; }
     .service-pill { font-size: 0.66rem; }
 }
+
+
 
 

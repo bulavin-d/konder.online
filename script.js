@@ -1,4 +1,4 @@
-/* =============================================
+﻿/* =============================================
    KONDER.ONLINE — script.js v16
    - Reverted to v13 ridge paths (they were correct)
    - Fixed draw(): uniform thin line, NO gradient = no sperm
@@ -74,416 +74,720 @@ var lastTime = performance.now();
 //  3. HERO CANVAS
 // ============================================================
 var heroCanvas = null;
+var lastHeroViewportWidth = window.innerWidth;
 
-/* ──────────────────────────────────────────────────────────
-   WindRibbon — thin continuous line, no gradient sperm effect
+class SnowParticle {
+    constructor(source, S, oY) {
+        this.source = source;
+        this.S = S;
+        this.oY = oY || 0;
+        this.history = [];
+        this.reset(true);
+    }
 
-   Rendering principle:
-   • NO head-to-tail gradient (that's what made it look like sperm)
-   • Uniform thin stroke with constant alpha
-   • Long trail → looks like a flowing line, not a blob
-   • Paths revert to v13 coordinates — those swept nicely off ridges
+    reset(isInitial) {
+        var S = this.S;
+        var oY = this.oY;
 
-   Sources:
-   • 'left_ridge'  — air lifts off left mountain, curves into AC
-   • 'right_ridge' — mirror of left
-   • 'out'         — icy air fans out from AC vent
-────────────────────────────────────────────────────────── */
-function WindRibbon(source, S, oY) {
-    this.source  = source;
-    this.S       = S;
-    this.oY      = oY || 0;
-    this.history = [];
-    this.reset(true);
+        this.t = isInitial ? Math.random() : 0;
+        this.speed = 0.0015 + Math.random() * 0.002;
+        this.history = [];
+        this.trailLength = Math.floor(10 + Math.random() * 15);
+        this.pSize = (0.5 + Math.random() * 1.5) * S;
+
+        if (this.source === 'left_ridge') {
+            var lerp = Math.random();
+            this.startX = (280 + lerp * 80) * S;
+            this.startY = (220 + lerp * 70) * S + oY;
+            this.endX = (260 + Math.random() * 120) * S;
+            this.endY = 440 * S + oY;
+            this.cp1X = this.startX + 60 * S;
+            this.cp1Y = this.startY - 30 * S;
+            this.cp2X = this.endX - 20 * S;
+            this.cp2Y = this.endY - 100 * S;
+        } else if (this.source === 'right_ridge') {
+            var lerp2 = Math.random();
+            this.startX = (560 - lerp2 * 60) * S;
+            this.startY = (260 + lerp2 * 50) * S + oY;
+            this.endX = (420 + Math.random() * 120) * S;
+            this.endY = 440 * S + oY;
+            this.cp1X = this.startX - 60 * S;
+            this.cp1Y = this.startY - 30 * S;
+            this.cp2X = this.endX + 20 * S;
+            this.cp2Y = this.endY - 100 * S;
+        } else {
+            var baseStartX = 205 + Math.random() * 390;
+            this.startX = baseStartX * S;
+            this.startY = 553 * S + oY;
+            var spread = (baseStartX - 400) * 1.2;
+            this.endX = this.startX + spread * S + (Math.random() - 0.5) * 80 * S;
+            this.endY = 900 * S + oY;
+            this.cp1X = this.startX;
+            this.cp1Y = 620 * S + oY;
+            this.cp2X = this.endX - spread * 0.4 * S;
+            this.cp2Y = 720 * S + oY;
+        }
+    }
+
+    getPoint(time, windOffset) {
+        var t = this.t;
+        var u = 1 - t;
+        var tt = t * t;
+        var uu = u * u;
+        var x = uu * u * this.startX + 3 * uu * t * this.cp1X + 3 * u * tt * this.cp2X + tt * t * this.endX;
+        var y = uu * u * this.startY + 3 * uu * t * this.cp1Y + 3 * u * tt * this.cp2Y + tt * t * this.endY;
+
+        x += Math.sin(time * 3 + y * 0.015) * 4 * this.S;
+
+        if (this.source === 'out') {
+            x += windOffset * (t * t * 150 * this.S);
+        }
+
+        return { x: x, y: y };
+    }
+
+    update(time, windOffset) {
+        this.t += this.speed;
+        if (this.t > 1) {
+            this.reset(false);
+            return;
+        }
+        this.history.unshift(this.getPoint(time, windOffset || 0));
+        if (this.history.length > this.trailLength) this.history.pop();
+    }
+
+    draw(ctx) {
+        var h = this.history;
+        if (h.length < 1) return;
+
+        var alpha = 1;
+        if (this.t < 0.15) alpha = this.t / 0.15;
+        if (this.t > 0.85) alpha = (1 - this.t) / 0.15;
+
+        var head = h[0];
+        var sz = this.pSize;
+
+        ctx.save();
+
+        for (var i = 2; i < h.length; i += 3) {
+            var ta = alpha * (1 - i / h.length) * 0.6;
+            ctx.fillStyle = 'rgba(180, 220, 255, ' + ta + ')';
+            ctx.beginPath();
+            ctx.arc(h[i].x, h[i].y, sz * 0.8 * (1 - i / h.length), 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.translate(head.x, head.y);
+        ctx.rotate(this.t * 10);
+
+        ctx.fillStyle = 'rgba(255, 255, 255, ' + alpha + ')';
+        ctx.beginPath();
+        ctx.arc(0, 0, sz * 1.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, ' + (alpha * 0.8) + ')';
+        ctx.lineWidth = Math.max(0.5, sz * 0.5);
+        for (var j = 0; j < 6; j++) {
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(sz * 3.5, 0);
+            ctx.stroke();
+            ctx.rotate(Math.PI / 3);
+        }
+
+        ctx.restore();
+    }
 }
 
-WindRibbon.prototype.reset = function (isInitial) {
-    var S = this.S, oY = this.oY;
-    this.t           = isInitial ? Math.random() : 0;
-    this.speed       = 0.003 + Math.random() * 0.005;         /* slightly faster */
-    this.history     = [];
-    this.trailLength = Math.floor(6 + Math.random() * 9);     /* short: 6-15 pts — ice crystal, not snake */
-    this.pSize       = (0.55 + Math.random() * 1.1) * S;      /* particle base size */
-
-    if (this.source === 'left_ridge') {
-        /* ── v13 coordinates — proven to look great ── */
-        var lerp = Math.random();
-        this.startX = (280 + lerp * 80) * S;
-        this.startY = (220 + lerp * 70) * S + oY;
-        this.endX   = (260 + Math.random() * 120) * S;
-        this.endY   = 440 * S + oY;
-        /* cp1 goes RIGHT & slightly UP off the ridge — lift-off feel */
-        this.cp1X   = this.startX + 60 * S;
-        this.cp1Y   = this.startY - 30 * S;
-        this.cp2X   = this.endX - 20 * S;
-        this.cp2Y   = this.endY - 100 * S;
-
-    } else if (this.source === 'right_ridge') {
-        var lerp2 = Math.random();
-        this.startX = (560 - lerp2 * 60) * S;
-        this.startY = (260 + lerp2 * 50) * S + oY;
-        this.endX   = (420 + Math.random() * 120) * S;
-        this.endY   = 440 * S + oY;
-        /* cp1 goes LEFT & slightly UP */
-        this.cp1X   = this.startX - 60 * S;
-        this.cp1Y   = this.startY - 30 * S;
-        this.cp2X   = this.endX + 20 * S;
-        this.cp2Y   = this.endY - 100 * S;
-
-    } else {
-        /* 'out' — cold air fans wide from vent slot
-           AC vent in composition coords:
-             x: 200…600  (vM=50 each side of 150…650)
-             y: ~553      (vY=544 + vH/2=9 → centre of the slot)     */
-        this.startX = (205 + Math.random() * 390) * S;
-        this.startY = 553 * S + oY;                /* ← vent centre, not below AC */
-        var spread  = (this.startX / S - 400) * 1.2;
-        this.endX   = this.startX + spread * S + (Math.random() - 0.5) * 60 * S;
-        this.endY   = 840 * S + oY;
-        this.cp1X   = this.startX;
-        this.cp1Y   = 620 * S + oY;
-        this.cp2X   = this.endX - spread * 0.4 * S;
-        this.cp2Y   = 720 * S + oY;
+class Cloud {
+    constructor(w, h, S) {
+        this.w = w;
+        this.h = h;
+        this.S = S;
+        this.reset(true);
     }
-};
 
-WindRibbon.prototype.getPoint = function (time) {
-    var t=this.t, u=1-t, tt=t*t, uu=u*u;
-    var x = uu*u*this.startX + 3*uu*t*this.cp1X + 3*u*tt*this.cp2X + tt*t*this.endX;
-    var y = uu*u*this.startY + 3*uu*t*this.cp1Y + 3*u*tt*this.cp2Y + tt*t*this.endY;
-    /* horizontal-only wiggle, same amplitude as v13 */
-    x += Math.sin(time * 3 + y * 0.015) * 3 * this.S;
-    return { x:x, y:y };
-};
+    reset(randomizeX) {
+        this.size = (Math.random() * 150 + 100) * this.S;
+        this.y = Math.random() * (this.h * 0.5);
+        this.x = randomizeX ? Math.random() * this.w : -this.size;
+        this.speed = (Math.random() * 0.2 + 0.1) * this.S;
+        this.alpha = Math.random() * 0.15 + 0.05;
+    }
 
-WindRibbon.prototype.update = function (time) {
-    this.t += this.speed;
-    if (this.t > 1) { this.reset(false); return; }
-    this.history.unshift(this.getPoint(time));
-    if (this.history.length > this.trailLength) this.history.pop();
-};
+    update() {
+        this.x += this.speed;
+        if (this.x > this.w + this.size) this.reset(false);
+    }
 
-WindRibbon.prototype.draw = function (ctx) {
-    var h = this.history;
-    if (h.length < 1) return;
+    draw(ctx) {
+        ctx.save();
+        var grad = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+        grad.addColorStop(0, 'rgba(200, 220, 255, ' + this.alpha + ')');
+        grad.addColorStop(1, 'rgba(200, 220, 255, 0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+}
 
-    /* Fade in/out at journey edges */
-    var alpha = 1;
-    if (this.t < 0.10) alpha = this.t / 0.10;
-    if (this.t > 0.88) alpha = (1 - this.t) / 0.12;
+class ShootingStar {
+    constructor(w, h, S) {
+        this.w = w;
+        this.h = h;
+        this.S = S;
+        this.active = false;
+    }
 
-    var head = h[0];
-    var sz   = this.pSize;  /* base particle size */
+    spawn() {
+        this.active = true;
+        this.x = Math.random() * this.w * 0.8 + this.w * 0.2;
+        this.y = -50;
+        this.length = (Math.random() * 80 + 40) * this.S;
+        this.speedX = -(Math.random() * 1.5 + 2) * this.S;
+        this.speedY = (Math.random() * 1 + 1) * this.S;
+        this.opacity = 1;
+    }
 
-    ctx.save();
+    update() {
+        if (!this.active) {
+            if (Math.random() < 0.0003) this.spawn();
+            return;
+        }
 
-    /* ── Short wispy vapour trail ──
-       Only a handful of segments, each fading rapidly toward the tail.
-       Looks like a faint breath of air, not a streak or a blob.        */
-    if (h.length > 1) {
-        var trailMax = Math.min(h.length, this.trailLength);
-        for (var i = 0; i < trailMax - 1; i++) {
-            var frac = 1 - (i / trailMax);
-            var ta   = alpha * frac * frac * 0.22;
-            ctx.strokeStyle = 'rgba(210, 242, 255, ' + ta + ')';
-            ctx.lineWidth   = Math.max(0.3, sz * frac * 0.85);
-            ctx.lineCap     = 'round';
+        this.x += this.speedX;
+        this.y += this.speedY;
+        this.opacity -= 0.005;
+        if (this.opacity <= 0 || this.y > this.h) this.active = false;
+    }
+
+    draw(ctx) {
+        if (!this.active) return;
+
+        ctx.save();
+        var grad = ctx.createLinearGradient(this.x, this.y, this.x - this.speedX * 4, this.y - this.speedY * 4);
+        grad.addColorStop(0, 'rgba(255, 255, 255, ' + this.opacity + ')');
+        grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 2 * this.S;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(this.x - this.length * (this.speedX / 10), this.y - this.length * (this.speedY / 10));
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(255, 255, 255, ' + this.opacity + ')';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 2 * this.S, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+class HeroCanvas {
+    constructor() {
+        this.canvas = document.getElementById('hero-canvas');
+        this.section = document.getElementById('hero');
+        this.titleEl = document.getElementById('hero-title') || document.querySelector('.hero-title');
+
+        if (!this.canvas || !this.section) return;
+
+        this.ctx = this.canvas.getContext('2d', { alpha: false });
+
+        this.particles = [];
+        this.stars = [];
+        this.clouds = [];
+        this.shootingStars = [];
+
+        this.w = 0;
+        this.h = 0;
+        this.S = 1;
+        this.oX = 0;
+        this.oY = 0;
+        this.acCenterY = 0;
+
+        this.mouseX = -1000;
+        this.targetWind = 0;
+        this.currentWind = 0;
+
+        this.time = 0;
+        this.startTime = performance.now();
+        this.titleShown = false;
+        this.heroVisible = true;
+
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        var self = this;
+
+        function updateMouse(e) {
+            var source = e;
+            if (e.touches && e.touches[0]) source = e.touches[0];
+            if (!source || typeof source.clientX !== 'number') return;
+
+            var rect = self.canvas.getBoundingClientRect();
+            self.mouseX = source.clientX - rect.left;
+        }
+
+        window.addEventListener('mousemove', updateMouse);
+        window.addEventListener('touchmove', updateMouse, { passive: true });
+        window.addEventListener('mouseleave', function () { self.mouseX = -1000; });
+        window.addEventListener('touchend', function () { self.mouseX = -1000; });
+    }
+
+    resize() {
+        if (!this.canvas) return;
+
+        var dpr = window.devicePixelRatio || 1;
+        this.w = this.section.offsetWidth;
+        this.h = this.section.offsetHeight;
+
+        this.canvas.width = this.w * dpr;
+        this.canvas.height = this.h * dpr;
+        this.canvas.style.width = this.w + 'px';
+        this.canvas.style.height = this.h + 'px';
+
+        this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        var wFit = this.w < 600 ? this.w * 0.86 : this.w;
+        this.S = Math.min(this.h * 0.82 / 800, wFit / 500);
+        this.oX = (this.w - 800 * this.S) / 2;
+        var naturalOY = this.h - 800 * this.S;
+        this.oY = Math.max(naturalOY, 0);
+
+        if (this.titleEl) {
+            this.titleEl.style.fontSize = Math.max(14, Math.floor(42 * this.S)) + 'px';
+            this.titleEl.style.letterSpacing = Math.max(0, Math.floor(1.5 * this.S)) + 'px';
+        }
+
+        this.initElements();
+    }
+
+    initElements() {
+        this.particles = [];
+        var S = this.S;
+        var oY = this.oY;
+
+        for (var i = 0; i < 22; i++) this.particles.push(new SnowParticle('left_ridge', S, oY));
+        for (var j = 0; j < 22; j++) this.particles.push(new SnowParticle('right_ridge', S, oY));
+        for (var k = 0; k < 45; k++) this.particles.push(new SnowParticle('out', S, oY));
+
+        this.stars = [];
+        var skyH = Math.max(this.oY + 250 * this.S, this.h * 0.4);
+        var count = Math.min(Math.floor(this.w * skyH / 10000), 60);
+        for (var s = 0; s < count; s++) {
+            this.stars.push({
+                x: Math.random() * this.w,
+                y: Math.random() * skyH,
+                size: 0.5 + Math.random() * 1.5,
+                speed: 0.2 + Math.random() * 0.8,
+                offset: Math.random() * Math.PI * 2,
+                maxA: 0.2 + Math.random() * 0.5
+            });
+        }
+
+        this.clouds = [];
+        for (var c = 0; c < 5; c++) this.clouds.push(new Cloud(this.w, this.h, this.S));
+
+        this.shootingStars = [new ShootingStar(this.w, this.h, this.S), new ShootingStar(this.w, this.h, this.S)];
+    }
+
+    drawBg() {
+        var ctx = this.ctx;
+        var g = ctx.createRadialGradient(this.w / 2, this.h * 0.4, 0, this.w / 2, this.h * 0.4, Math.max(this.w, this.h) * 0.8);
+        g.addColorStop(0, '#0c2445');
+        g.addColorStop(0.5, '#051124');
+        g.addColorStop(1, '#02060d');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, this.w, this.h);
+    }
+
+    drawMoon() {
+        var ctx = this.ctx;
+        var mX = this.w * 0.75;
+        var mY = this.h * 0.25;
+        var mR = 40 * this.S;
+
+        ctx.save();
+        ctx.shadowColor = 'rgba(180, 220, 255, 0.4)';
+        ctx.shadowBlur = 50 * this.S;
+
+        var grad = ctx.createRadialGradient(mX, mY, 0, mX, mY, mR);
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(0.8, '#e0f0ff');
+        grad.addColorStop(1, '#aaccff');
+
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(mX, mY, mR, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    drawStars() {
+        var ctx = this.ctx;
+        var t = this.time;
+
+        for (var i = 0; i < this.stars.length; i++) {
+            var s = this.stars[i];
+            var a = s.maxA * (0.5 + 0.5 * Math.sin(t * s.speed + s.offset));
+            ctx.save();
+            ctx.globalAlpha = a;
+            var rad = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.size * 2);
+            rad.addColorStop(0, '#ffffff');
+            rad.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = rad;
             ctx.beginPath();
-            ctx.moveTo(h[i].x,     h[i].y);
-            ctx.lineTo(h[i+1].x,   h[i+1].y);
+            ctx.arc(s.x, s.y, s.size * 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
+    drawMountain(peakX, peakY, leftX, rightX, colorLightTop, colorLightBot, colorDarkTop, colorDarkBot, snowDepth, progress) {
+        if (progress <= 0) return;
+
+        var ctx = this.ctx;
+        var S = this.S;
+        var oX = this.oX;
+        var oY = this.oY;
+        var baseY = this.h + 10;
+        var mtnH = 800 - peakY;
+        var px = peakX * S + oX;
+        var lx = leftX * S + oX;
+        var rx = rightX * S + oX;
+        var tPY = peakY * S + oY;
+        var animPY = baseY + (tPY - baseY) * progress;
+
+        var gradL = ctx.createLinearGradient(lx, animPY, px, baseY);
+        gradL.addColorStop(0, colorLightTop);
+        gradL.addColorStop(1, colorLightBot);
+        ctx.fillStyle = gradL;
+        ctx.beginPath();
+        ctx.moveTo(lx, baseY);
+        ctx.lineTo(px, animPY);
+        ctx.lineTo(px, baseY);
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+        ctx.beginPath();
+        ctx.moveTo(lx + (px - lx) * 0.45, baseY);
+        ctx.lineTo(px, animPY);
+        ctx.lineTo(px, baseY);
+        ctx.fill();
+
+        var gradD = ctx.createLinearGradient(px, animPY, rx, baseY);
+        gradD.addColorStop(0, colorDarkTop);
+        gradD.addColorStop(1, colorDarkBot);
+        ctx.fillStyle = gradD;
+        ctx.beginPath();
+        ctx.moveTo(px, animPY);
+        ctx.lineTo(rx, baseY);
+        ctx.lineTo(px, baseY);
+        ctx.fill();
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+        ctx.beginPath();
+        ctx.moveTo(px, animPY);
+        ctx.lineTo(px + (rx - px) * 0.35, baseY);
+        ctx.lineTo(px, baseY);
+        ctx.fill();
+
+        if (progress > 0.5) {
+            var sa = (progress - 0.5) / 0.5;
+            ctx.save();
+            ctx.globalAlpha = sa;
+
+            var ratio = snowDepth / mtnH;
+            var snowLX = peakX + ratio * (leftX - peakX);
+            var snowRX = peakX + ratio * (rightX - peakX);
+            var snowBotScr = (peakY + snowDepth) * S + oY;
+            var animSnow = baseY + (snowBotScr - baseY) * progress;
+
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.moveTo(px, animPY);
+            ctx.lineTo(snowLX * S + oX, animSnow);
+            ctx.lineTo(px, animSnow);
+            ctx.fill();
+
+            ctx.fillStyle = 'rgba(200, 230, 255, 0.2)';
+            ctx.beginPath();
+            ctx.moveTo(px, animPY);
+            ctx.lineTo(snowLX * S + oX + (px - snowLX * S - oX) * 0.5, animSnow);
+            ctx.lineTo(px, animSnow);
+            ctx.fill();
+
+            ctx.fillStyle = '#c0d6f0';
+            ctx.beginPath();
+            ctx.moveTo(px, animPY);
+            ctx.lineTo(snowRX * S + oX, animSnow);
+            ctx.lineTo(px, animSnow);
+            ctx.fill();
+
+            ctx.fillStyle = 'rgba(10, 30, 60, 0.1)';
+            ctx.beginPath();
+            ctx.moveTo(px, animPY);
+            ctx.lineTo(px + (snowRX * S + oX - px) * 0.4, animSnow);
+            ctx.lineTo(px, animSnow);
+            ctx.fill();
+
+            ctx.restore();
+        }
+    }
+
+    drawMtnFade(progress) {
+        if (progress <= 0) return;
+        var ctx = this.ctx;
+        var fadeTop = 350 * this.S + this.oY;
+        var g = ctx.createLinearGradient(0, fadeTop, 0, this.h);
+        g.addColorStop(0, 'rgba(3, 10, 20, 0)');
+        g.addColorStop(1, 'rgba(3, 10, 20, ' + progress + ')');
+        ctx.fillStyle = g;
+        ctx.fillRect(0, fadeTop, this.w, this.h - fadeTop);
+    }
+
+    drawAC(progress) {
+        if (progress <= 0) return;
+
+        var ctx = this.ctx;
+        var S = this.S;
+        var oX = this.oX;
+        var oY = this.oY;
+
+        var acX = 150 * S + oX;
+        var acW = 500 * S;
+        var acH = 140 * S;
+        var acR = 25 * S;
+        var acTargetY = 430 * S + oY;
+        var acY = acTargetY + (1 - progress) * 80 * S;
+
+        this.acCenterY = acY + acH / 2;
+
+        ctx.save();
+        ctx.globalAlpha = progress;
+
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+        ctx.shadowBlur = 35 * S;
+        ctx.shadowOffsetY = 20 * S;
+
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.roundRect(acX, acY, acW, acH, acR);
+        ctx.fill();
+
+        ctx.shadowColor = 'transparent';
+        ctx.shadowOffsetY = 0;
+        ctx.shadowBlur = 0;
+
+        var bodyG = ctx.createLinearGradient(0, acY, 0, acY + acH);
+        bodyG.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        bodyG.addColorStop(0.7, 'rgba(235, 242, 250, 1)');
+        bodyG.addColorStop(1, 'rgba(215, 225, 235, 1)');
+        ctx.fillStyle = bodyG;
+        ctx.fill();
+
+        var vM = acW * 0.06;
+        var vX = acX + vM;
+        var vH = 20 * S;
+        var vY = acY + acH - vH - 12 * S;
+        var vW = acW - vM * 2;
+
+        var ventGrad = ctx.createLinearGradient(0, vY, 0, vY + vH);
+        ventGrad.addColorStop(0, '#02060f');
+        ventGrad.addColorStop(1, '#0a172e');
+        ctx.fillStyle = ventGrad;
+        ctx.beginPath();
+        ctx.roundRect(vX, vY, vW, vH, 8 * S);
+        ctx.fill();
+
+        ctx.strokeStyle = '#050c17';
+        ctx.lineWidth = 3 * S;
+        for (var i = 1; i < 18; i++) {
+            var finX = vX + (vW / 18) * i;
+            ctx.beginPath();
+            ctx.moveTo(finX, vY + 2 * S);
+            ctx.lineTo(finX, vY + vH - 2 * S);
             ctx.stroke();
         }
-    }
 
-    /* ── Ice-crystal head ──
-       Marketing concept: "воздух прямо с хребтов гор" —
-       so each particle looks like a tiny airborne ice crystal:
-       bright glowing core + soft ethereal halo + sparkle cross arms.   */
-    var r = sz * 2.4;
+        var swing = Math.sin(this.time * 0.6) * 1.5 * S;
 
-    /* Soft outer halo — like the glow of ice in sunlight */
-    var grd = ctx.createRadialGradient(head.x, head.y, 0, head.x, head.y, r * 3.2);
-    grd.addColorStop(0,    'rgba(235, 252, 255, ' + (alpha * 0.50) + ')');
-    grd.addColorStop(0.40, 'rgba(175, 228, 255, ' + (alpha * 0.16) + ')');
-    grd.addColorStop(1,    'rgba(140, 210, 255, 0)');
-    ctx.fillStyle = grd;
-    ctx.beginPath();
-    ctx.arc(head.x, head.y, r * 3.2, 0, Math.PI * 2);
-    ctx.fill();
+        ctx.fillStyle = '#112240';
+        ctx.beginPath();
+        ctx.roundRect(vX + 6 * S, vY + vH * 0.25 + swing, vW - 12 * S, 3.5 * S, 2 * S);
+        ctx.fill();
 
-    /* Bright crystalline core */
-    ctx.fillStyle = 'rgba(255, 255, 255, ' + (alpha * 0.95) + ')';
-    ctx.beginPath();
-    ctx.arc(head.x, head.y, r * 0.36, 0, Math.PI * 2);
-    ctx.fill();
+        var louverGrad = ctx.createLinearGradient(0, vY + vH * 0.65, 0, vY + vH * 0.65 + 4 * S);
+        louverGrad.addColorStop(0, '#112240');
+        louverGrad.addColorStop(1, '#203a63');
+        ctx.fillStyle = louverGrad;
+        ctx.beginPath();
+        ctx.roundRect(vX + 6 * S, vY + vH * 0.65 + swing * 1.2, vW - 12 * S, 3.5 * S, 2 * S);
+        ctx.fill();
 
-    /* Sparkle cross arms — only on bigger particles, keeps density natural */
-    if (sz > 0.75 * this.S) {
-        var arm = r * 1.05;
-        ctx.strokeStyle = 'rgba(255, 255, 255, ' + (alpha * 0.52) + ')';
-        ctx.lineWidth   = Math.max(0.35, sz * 0.32);
-        ctx.lineCap     = 'round';
-        ctx.beginPath(); ctx.moveTo(head.x - arm, head.y); ctx.lineTo(head.x + arm, head.y); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(head.x, head.y - arm); ctx.lineTo(head.x, head.y + arm); ctx.stroke();
-        /* 45° secondary arms — half-length, makes it a proper 8-point snowflake speck */
-        var arm2 = arm * 0.6;
-        ctx.strokeStyle = 'rgba(255, 255, 255, ' + (alpha * 0.28) + ')';
-        ctx.beginPath(); ctx.moveTo(head.x - arm2, head.y - arm2); ctx.lineTo(head.x + arm2, head.y + arm2); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(head.x + arm2, head.y - arm2); ctx.lineTo(head.x - arm2, head.y + arm2); ctx.stroke();
-    }
+        var sfR = 14 * S;
+        var sfX = acX + 32 * S;
+        var sfY = acY + 28 * S;
 
-    ctx.restore();
-};
+        ctx.fillStyle = '#030a14';
+        ctx.beginPath();
+        ctx.arc(sfX, sfY, sfR, 0, Math.PI * 2);
+        ctx.fill();
 
-// ──────────────────────────────────────────────────────────────
-//  HeroCanvas
-// ──────────────────────────────────────────────────────────────
-function HeroCanvas() {
-    this.canvas      = document.getElementById('hero-canvas');
-    if (!this.canvas) return;
-    this.section     = this.canvas.parentElement;
-    this.ctx         = this.canvas.getContext('2d');
-    this.ribbons     = [];
-    this.stars       = [];
-    this.w=0; this.h=0; this.S=1; this.oX=0; this.oY=0;
-    this.acCenterY   = 0;
-    this.time        = 0;
-    this.startTime   = performance.now();
-    this.titleShown  = false;
-    this.heroVisible = true;
-}
+        ctx.strokeStyle = 'rgba(0,0,0,0.4)';
+        ctx.lineWidth = 3 * S;
+        ctx.beginPath();
+        ctx.arc(sfX, sfY, sfR - 1 * S, 0, Math.PI * 2);
+        ctx.stroke();
 
-HeroCanvas.prototype.resize = function () {
-    if (!this.canvas) return;
-    var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    this.w  = this.section.offsetWidth;
-    this.h  = this.section.offsetHeight;
-    this.canvas.width  = this.w * dpr;
-    this.canvas.height = this.h * dpr;
-    this.canvas.style.width  = this.w + 'px';
-    this.canvas.style.height = this.h + 'px';
-    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.save();
+        ctx.translate(sfX, sfY);
+        ctx.rotate(this.time * 1.5);
 
-    /* ── Scale strategy ─────────────────────────────────────────────
-       The 800×800 composition has the AC spanning x=150…650 (500 units).
-       For it to fit the screen: S ≤ w / 500.
-       We also want mountains tall: S ≤ h * 0.82 / 800.
-       Take the min so BOTH constraints are satisfied on any device.
-
-       On desktop landscape: h*0.82/800 ≈ 0.82, w/500 ≈ 2.4+ → height wins ✓
-       On iPhone 390×844:    h*0.82/800 = 0.865, w/500 = 0.78 → width wins ✓
-         → Apply 0.86 factor on narrow screens so AC has side breathing room.
-    ─────────────────────────────────────────────────────────────── */
-    var wFit = this.w < 600 ? this.w * 0.86 : this.w;
-    this.S  = Math.min(this.h * 0.82 / 800, wFit / 500);
-    this.oX = (this.w - 800 * this.S) / 2;
-    /* anchor composition bottom to canvas bottom */
-    var naturalOY = this.h - 800 * this.S;
-    this.oY = Math.max(naturalOY, 0);
-
-    /* Ribbons */
-    this.ribbons = [];
-    var S = this.S, oY = this.oY;
-    for (var i=0; i<18; i++) this.ribbons.push(new WindRibbon('left_ridge',  S, oY));
-    for (var j=0; j<18; j++) this.ribbons.push(new WindRibbon('right_ridge', S, oY));
-    for (var k=0; k<30; k++) this.ribbons.push(new WindRibbon('out',         S, oY));
-
-    /* Stars — upper region */
-    this.stars = [];
-    var skyH  = Math.max(this.oY + 180*this.S, this.h * 0.32);
-    var count = Math.min(Math.floor(this.w * skyH / 13000), 42);
-    for (var s=0; s<count; s++) {
-        this.stars.push({
-            x:      Math.random() * this.w,
-            y:      Math.random() * skyH,
-            size:   0.4 + Math.random() * 1.5,
-            speed:  0.4 + Math.random() * 1.2,
-            offset: Math.random() * Math.PI * 2,
-            maxA:   0.22 + Math.random() * 0.42
-        });
-    }
-};
-
-HeroCanvas.prototype.drawBg = function () {
-    var ctx=this.ctx, w=this.w, h=this.h;
-    var g = ctx.createRadialGradient(w/2,h*0.4,0,w/2,h*0.4,Math.max(w,h)*0.85);
-    g.addColorStop(0,'#2a6595'); g.addColorStop(0.5,'#0e2d55'); g.addColorStop(1,'#071a38');
-    ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
-};
-
-HeroCanvas.prototype.drawStars = function () {
-    var ctx=this.ctx, t=this.time;
-    for(var i=0;i<this.stars.length;i++){
-        var s=this.stars[i];
-        var a=s.maxA*(0.5+0.5*Math.sin(t*s.speed+s.offset));
-        ctx.save(); ctx.globalAlpha=a; ctx.fillStyle='#ffffff';
-        if(s.size>1.0){
-            var sz=s.size;
+        ctx.fillStyle = '#1e3c66';
+        for (var b = 0; b < 3; b++) {
+            ctx.rotate((Math.PI * 2) / 3);
             ctx.beginPath();
-            ctx.moveTo(s.x,s.y-sz*1.6); ctx.lineTo(s.x+sz*0.3,s.y);
-            ctx.lineTo(s.x,s.y+sz*1.6); ctx.lineTo(s.x-sz*0.3,s.y);
-            ctx.closePath(); ctx.fill();
+            ctx.moveTo(0, 0);
+            ctx.quadraticCurveTo(sfR * 0.8, -sfR * 0.4, sfR * 0.85, 0);
+            ctx.quadraticCurveTo(sfR * 0.5, sfR * 0.4, 0, 0);
+            ctx.fill();
+        }
+
+        ctx.fillStyle = '#b1c4d9';
+        ctx.beginPath();
+        ctx.arc(0, 0, 3 * S, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#061326';
+        ctx.beginPath();
+        ctx.arc(0, 0, 1 * S, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        var btnX = acX + acW - 75 * S;
+        var btnY = acY + 25 * S;
+        var ledSpacing = 16 * S;
+
+        for (var led = 0; led < 3; led++) {
+            var phase = this.time * 0.8 - led * 1.5;
+            var ledAlpha = 0.1 + 0.9 * Math.max(0, Math.sin(phase));
+
+            if (ledAlpha > 0.3) {
+                ctx.shadowColor = 'rgba(59, 158, 237, ' + ledAlpha + ')';
+                ctx.shadowBlur = 10 * S * ledAlpha;
+                ctx.fillStyle = 'rgba(59, 158, 237, ' + ledAlpha + ')';
+            } else {
+                ctx.shadowColor = 'transparent';
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#0f1f38';
+            }
+
+            ctx.beginPath();
+            ctx.arc(btnX + led * ledSpacing, btnY, 3.5 * S, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        ctx.shadowColor = 'transparent';
+        ctx.shadowBlur = 0;
+        ctx.restore();
+    }
+
+    easeOut(t) {
+        return 1 - Math.pow(1 - Math.min(Math.max(t, 0), 1), 3);
+    }
+
+    animate(dt) {
+        if (!this.canvas) return;
+        if (!this.heroVisible && this.titleShown) return;
+
+        var ctx = this.ctx;
+        var w = this.w;
+        var h = this.h;
+        ctx.clearRect(0, 0, w, h);
+        this.time += 0.016;
+
+        if (this.mouseX > -1000) {
+            this.targetWind = (this.mouseX - this.w / 2) / (this.w / 2);
         } else {
-            ctx.beginPath(); ctx.arc(s.x,s.y,s.size,0,Math.PI*2); ctx.fill();
+            this.targetWind = 0;
         }
+        this.currentWind += (this.targetWind - this.currentWind) * 0.05;
+
+        var elapsed = (performance.now() - this.startTime) / 1000;
+        var bgAlpha = Math.min(elapsed / 0.5, 1);
+        var bgAssetsProg = this.easeOut((elapsed - 0.5) / 1.0);
+        var mtnProg = this.easeOut((elapsed - 0.2) / 1.0);
+        var acProg = this.easeOut((elapsed - 0.8) / 1.0);
+        var ridgeReady = elapsed > 1.4;
+        var outReady = elapsed > 1.8;
+
+        ctx.save();
+        ctx.globalAlpha = bgAlpha;
+        this.drawBg();
         ctx.restore();
-    }
-};
 
-HeroCanvas.prototype.drawMountain = function (peakX,peakY,leftX,rightX,colorL,colorD,snowDepth,progress) {
-    var ctx=this.ctx, S=this.S, oX=this.oX, oY=this.oY;
-    var baseY  = this.h + 10;
-    var mtnH   = 800 - peakY;
-    var px=peakX*S+oX, lx=leftX*S+oX, rx=rightX*S+oX;
-    var tPY    = peakY*S + oY;
-    var animPY = baseY + (tPY - baseY) * progress;
-
-    ctx.fillStyle=colorL;
-    ctx.beginPath(); ctx.moveTo(lx,baseY); ctx.lineTo(px,animPY); ctx.lineTo(px,baseY); ctx.fill();
-    ctx.fillStyle=colorD;
-    ctx.beginPath(); ctx.moveTo(px,animPY); ctx.lineTo(rx,baseY); ctx.lineTo(px,baseY); ctx.fill();
-
-    if(progress>0.7){
-        var sa=(progress-0.7)/0.3;
-        ctx.save(); ctx.globalAlpha=sa;
-        var ratio=snowDepth/mtnH;
-        var snowLX=peakX+ratio*(leftX-peakX);
-        var snowRX=peakX+ratio*(rightX-peakX);
-        var snowBotScr=(peakY+snowDepth)*S+oY;
-        var animSnow=baseY+(snowBotScr-baseY)*progress;
-        ctx.fillStyle='#FFFFFF';
-        ctx.beginPath(); ctx.moveTo(px,animPY); ctx.lineTo(snowLX*S+oX,animSnow); ctx.lineTo(px,animSnow); ctx.fill();
-        ctx.fillStyle='#AECDF5';
-        ctx.beginPath(); ctx.moveTo(px,animPY); ctx.lineTo(snowRX*S+oX,animSnow); ctx.lineTo(px,animSnow); ctx.fill();
-        ctx.restore();
-    }
-};
-
-HeroCanvas.prototype.drawMtnFade = function (progress) {
-    if(progress<=0) return;
-    var ctx=this.ctx, w=this.w, h=this.h;
-    var fadeTop=400*this.S+this.oY;
-    var g=ctx.createLinearGradient(0,fadeTop,0,h);
-    g.addColorStop(0,'rgba(5,20,45,0)');
-    g.addColorStop(1,'rgba(5,20,45,'+progress+')');
-    ctx.fillStyle=g; ctx.fillRect(0,fadeTop,w,h-fadeTop);
-};
-
-HeroCanvas.prototype.drawAC = function (progress) {
-    if(progress<=0) return;
-    var ctx=this.ctx, S=this.S, oX=this.oX, oY=this.oY;
-    var acX=150*S+oX, acW=500*S, acH=140*S, acR=25*S;
-    var acTargetY=430*S+oY;
-    var acY=acTargetY+(1-progress)*50*S;
-
-    this.acCenterY=acY+acH/2;
-
-    ctx.save(); ctx.globalAlpha=progress;
-    ctx.shadowColor='rgba(0,10,30,0.7)'; ctx.shadowBlur=20*S; ctx.shadowOffsetY=12*S;
-    ctx.fillStyle='#FFFFFF';
-    ctx.beginPath(); ctx.roundRect(acX,acY,acW,acH,acR); ctx.fill();
-    ctx.shadowColor='transparent';
-
-    var bodyG=ctx.createLinearGradient(0,acY,0,acY+acH);
-    bodyG.addColorStop(0.5,'rgba(255,255,255,0)');
-    bodyG.addColorStop(1,'rgba(150,200,255,0.35)');
-    ctx.fillStyle=bodyG; ctx.fill();
-
-    var vM=acW*0.1, vX=acX+vM, vH=18*S, vY=acY+acH-vH-8*S, vW=acW-vM*2;
-    ctx.fillStyle='#0F2B5B';
-    ctx.beginPath(); ctx.roundRect(vX,vY,vW,vH,6*S); ctx.fill();
-    ctx.strokeStyle='#2858A6'; ctx.lineWidth=Math.max(2,3*S); ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(vX+12*S,vY+vH/2); ctx.lineTo(vX+vW-12*S,vY+vH/2); ctx.stroke();
-
-    var sfX=acX+38*S, sfY=acY+28*S, arm=10*S, br=3.5*S;
-    ctx.strokeStyle='#3A82DF'; ctx.lineWidth=Math.max(1.5,2*S); ctx.lineCap='round';
-    for(var i=0;i<6;i++){
-        ctx.save(); ctx.translate(sfX,sfY); ctx.rotate((Math.PI/3)*i);
-        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(arm,0); ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(arm*0.55,0); ctx.lineTo(arm*0.55+br*0.5,-br);
-        ctx.moveTo(arm*0.55,0); ctx.lineTo(arm*0.55+br*0.5,br);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(arm,0); ctx.lineTo(arm-br*0.3,-br*0.55);
-        ctx.moveTo(arm,0); ctx.lineTo(arm-br*0.3,br*0.55);
-        ctx.stroke();
-        ctx.restore();
-    }
-    ctx.fillStyle='#5BBBFF'; ctx.beginPath(); ctx.arc(sfX,sfY,1.8*S,0,Math.PI*2); ctx.fill();
-
-    var btnX=acX+acW-52*S, btnY=acY+28*S;
-    for(var j=0;j<3;j++){
-        var da=0.2+0.8*((Math.sin(this.time*2-j*1.5)+1)/2);
-        ctx.fillStyle='rgba(15,60,120,'+da+')';
-        ctx.beginPath(); ctx.arc(btnX+j*14*S,btnY,3.5*S,0,Math.PI*2); ctx.fill();
-    }
-    ctx.restore();
-};
-
-function easeOut(t){return 1-Math.pow(1-Math.min(Math.max(t,0),1),3);}
-
-HeroCanvas.prototype.animate = function (dt) {
-    if(!this.canvas) return;
-    if(!this.heroVisible && this.titleShown) return;
-
-    var ctx=this.ctx, w=this.w, h=this.h;
-    ctx.clearRect(0,0,w,h);
-    this.time+=0.016;
-
-    var elapsed    = (performance.now()-this.startTime)/1000;
-    var bgAlpha    = easeOut(elapsed/0.5);
-    var mtnProg    = easeOut((elapsed-0.3)/1.2);
-    var fadeProg   = easeOut((elapsed-1.2)/0.6);
-    var acProg     = easeOut((elapsed-1.5)/0.8);
-    var ridgeReady = elapsed > 1.0;
-    var outReady   = elapsed > 2.2;
-
-    ctx.save(); ctx.globalAlpha=bgAlpha; this.drawBg(); ctx.restore();
-
-    if(bgAlpha>0.5){
-        ctx.save(); ctx.globalAlpha=Math.min((bgAlpha-0.5)*2,1);
-        this.drawStars(); ctx.restore();
-    }
-
-    this.drawMountain(560,260, 114,1193,'#12438C','#0A2554',65,mtnProg);
-    this.drawMountain(280,220,-300, 754,'#1E63C2','#123D78',70,mtnProg);
-    this.drawMtnFade(fadeProg);
-
-    if(ridgeReady && this.heroVisible){
-        ctx.save(); ctx.translate(this.oX,0);
-        ctx.globalCompositeOperation='screen';
-        for(var i=0;i<this.ribbons.length;i++){
-            var r=this.ribbons[i];
-            if(r.source!=='out'){ r.update(this.time); r.draw(ctx); }
+        if (bgAlpha > 0.5) {
+            ctx.save();
+            ctx.globalAlpha = Math.min((bgAlpha - 0.5) * 2, 1);
+            this.drawStars();
+            ctx.restore();
         }
-        ctx.globalCompositeOperation='source-over'; ctx.restore();
-    }
 
-    this.drawAC(acProg);
-
-    if(outReady && this.heroVisible){
-        ctx.save(); ctx.translate(this.oX,0);
-        ctx.globalCompositeOperation='screen';
-        for(var j=0;j<this.ribbons.length;j++){
-            var r2=this.ribbons[j];
-            if(r2.source==='out'){ r2.update(this.time); r2.draw(ctx); }
+        if (bgAssetsProg > 0) {
+            ctx.save();
+            ctx.globalAlpha = bgAssetsProg;
+            this.drawMoon();
+            this.clouds.forEach(function (c) { c.update(); c.draw(ctx); });
+            this.shootingStars.forEach(function (ss) { ss.update(); ss.draw(ctx); });
+            ctx.restore();
         }
-        ctx.globalCompositeOperation='source-over'; ctx.restore();
-    }
 
-    /* Keep title centred on AC body */
-    if(acProg>0.05 && this.acCenterY>0){
-        var wrap=document.querySelector('.hero-content');
-        if(wrap) wrap.style.top=this.acCenterY+'px';
-    }
+        this.drawMountain(560, 260, 114, 1193, '#1a4e99', '#0b2654', '#11356b', '#071838', 65, mtnProg);
+        this.drawMountain(280, 220, -300, 754, '#246bcf', '#113a78', '#184b94', '#0a224a', 70, mtnProg);
+        this.drawMtnFade(Math.min(mtnProg * 1.5, 1));
 
-    if(elapsed>2.0 && !this.titleShown){
-        this.titleShown=true;
-        var el=document.querySelector('.hero-title');
-        if(el) el.classList.add('visible');
+        if (ridgeReady && this.heroVisible) {
+            ctx.save();
+            ctx.translate(this.oX, 0);
+            ctx.globalCompositeOperation = 'screen';
+            for (var i = 0; i < this.particles.length; i++) {
+                var p = this.particles[i];
+                if (p.source !== 'out') { p.update(this.time, 0); p.draw(ctx); }
+            }
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.restore();
+        }
+
+        this.drawAC(acProg);
+
+        if (outReady && this.heroVisible) {
+            ctx.save();
+            ctx.translate(this.oX, 0);
+            ctx.globalCompositeOperation = 'screen';
+            for (var j = 0; j < this.particles.length; j++) {
+                var p2 = this.particles[j];
+                if (p2.source === 'out') { p2.update(this.time, this.currentWind); p2.draw(ctx); }
+            }
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.restore();
+        }
+
+        if (acProg > 0.05 && this.acCenterY > 0) {
+            var wrap = document.querySelector('.hero-content');
+            if (wrap) wrap.style.top = this.acCenterY + 'px';
+        }
+
+        if (elapsed > 2.0 && !this.titleShown) {
+            this.titleShown = true;
+            if (this.titleEl) this.titleEl.classList.add('visible');
+        }
     }
-};
+}
 
 // ============================================================
 //  4. REVEAL + COUNTERS
@@ -575,8 +879,13 @@ var resizeTimer;
 window.addEventListener('resize',function(){
     clearTimeout(resizeTimer);
     resizeTimer=setTimeout(function(){
-        if(heroCanvas) heroCanvas.resize();
-    },300);
+        if(!heroCanvas) return;
+        /* Ignore mobile browser chrome height jumps; repaint on real layout width change. */
+        if(window.innerWidth !== lastHeroViewportWidth){
+            lastHeroViewportWidth = window.innerWidth;
+            heroCanvas.resize();
+        }
+    },220);
 },{passive:true});
 
 // INIT
@@ -593,3 +902,5 @@ initReveal();
     },{threshold:0.05});
     obs.observe(heroCanvas.section);
 })();
+
+

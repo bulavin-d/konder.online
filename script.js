@@ -5,7 +5,7 @@
    - Portrait mobile: AC fits screen width via capped S
    ============================================= */
 
-var rafId    = null;
+var rafId = null;
 var lastTime = performance.now();
 
 // ============================================================
@@ -28,44 +28,44 @@ var lastTime = performance.now();
     var W = c.width, H = c.height, logoTime = 0;
 
     function drawLogoBg() {
-        var g = lctx.createRadialGradient(W/2,H/2,0,W/2,H/2,W*0.7);
-        g.addColorStop(0,'#1a4a80'); g.addColorStop(0.7,'#0e2d55'); g.addColorStop(1,'#071a38');
-        lctx.fillStyle=g; lctx.beginPath(); lctx.roundRect(0,0,W,H,24); lctx.fill();
+        var g = lctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, W * 0.7);
+        g.addColorStop(0, '#1a4a80'); g.addColorStop(0.7, '#0e2d55'); g.addColorStop(1, '#071a38');
+        lctx.fillStyle = g; lctx.beginPath(); lctx.roundRect(0, 0, W, H, 24); lctx.fill();
     }
-    function drawLogoMtn(px,py,lx,rx,cL,cD){
-        lctx.fillStyle=cL; lctx.beginPath(); lctx.moveTo(lx,H); lctx.lineTo(px,py); lctx.lineTo(px,H); lctx.fill();
-        lctx.fillStyle=cD; lctx.beginPath(); lctx.moveTo(px,py); lctx.lineTo(rx,H); lctx.lineTo(px,H); lctx.fill();
-        var mH=H-py, sD=mH*0.12, sBy=py+sD;
-        var sLX=px+(sD/mH)*(lx-px), sRX=px+(sD/mH)*(rx-px);
-        lctx.fillStyle='#FFFFFF'; lctx.beginPath(); lctx.moveTo(px,py); lctx.lineTo(sLX,sBy); lctx.lineTo(px,sBy); lctx.fill();
-        lctx.fillStyle='#AECDF5'; lctx.beginPath(); lctx.moveTo(px,py); lctx.lineTo(sRX,sBy); lctx.lineTo(px,sBy); lctx.fill();
+    function drawLogoMtn(px, py, lx, rx, cL, cD) {
+        lctx.fillStyle = cL; lctx.beginPath(); lctx.moveTo(lx, H); lctx.lineTo(px, py); lctx.lineTo(px, H); lctx.fill();
+        lctx.fillStyle = cD; lctx.beginPath(); lctx.moveTo(px, py); lctx.lineTo(rx, H); lctx.lineTo(px, H); lctx.fill();
+        var mH = H - py, sD = mH * 0.12, sBy = py + sD;
+        var sLX = px + (sD / mH) * (lx - px), sRX = px + (sD / mH) * (rx - px);
+        lctx.fillStyle = '#FFFFFF'; lctx.beginPath(); lctx.moveTo(px, py); lctx.lineTo(sLX, sBy); lctx.lineTo(px, sBy); lctx.fill();
+        lctx.fillStyle = '#AECDF5'; lctx.beginPath(); lctx.moveTo(px, py); lctx.lineTo(sRX, sBy); lctx.lineTo(px, sBy); lctx.fill();
     }
-    function drawLogoAC(){
-        var acX=W*0.19,acY=H*0.54,acW=W*0.62,acH=H*0.175,acR=5;
-        lctx.shadowColor='rgba(0,10,30,0.6)'; lctx.shadowBlur=8; lctx.shadowOffsetY=4;
-        lctx.fillStyle='#FFFFFF'; lctx.beginPath(); lctx.roundRect(acX,acY,acW,acH,acR); lctx.fill();
-        lctx.shadowColor='transparent';
-        var vH=acH*0.18,vX=acX+acW*0.1,vY=acY+acH-vH-acH*0.08,vW=acW*0.8;
-        lctx.fillStyle='#0F2B5B'; lctx.beginPath(); lctx.roundRect(vX,vY,vW,vH,2); lctx.fill();
-        var btnX=acX+acW*0.7,btnY=acY+acH*0.3;
-        for(var j=0;j<3;j++){
-            var a=0.3+0.7*((Math.sin(logoTime*2.5-j*1.5)+1)/2);
-            lctx.fillStyle='rgba(15,60,120,'+a+')';
-            lctx.beginPath(); lctx.arc(btnX+j*6,btnY,2,0,Math.PI*2); lctx.fill();
+    function drawLogoAC() {
+        var acX = W * 0.19, acY = H * 0.54, acW = W * 0.62, acH = H * 0.175, acR = 5;
+        lctx.shadowColor = 'rgba(0,10,30,0.6)'; lctx.shadowBlur = 8; lctx.shadowOffsetY = 4;
+        lctx.fillStyle = '#FFFFFF'; lctx.beginPath(); lctx.roundRect(acX, acY, acW, acH, acR); lctx.fill();
+        lctx.shadowColor = 'transparent';
+        var vH = acH * 0.18, vX = acX + acW * 0.1, vY = acY + acH - vH - acH * 0.08, vW = acW * 0.8;
+        lctx.fillStyle = '#0F2B5B'; lctx.beginPath(); lctx.roundRect(vX, vY, vW, vH, 2); lctx.fill();
+        var btnX = acX + acW * 0.7, btnY = acY + acH * 0.3;
+        for (var j = 0; j < 3; j++) {
+            var a = 0.3 + 0.7 * ((Math.sin(logoTime * 2.5 - j * 1.5) + 1) / 2);
+            lctx.fillStyle = 'rgba(15,60,120,' + a + ')';
+            lctx.beginPath(); lctx.arc(btnX + j * 6, btnY, 2, 0, Math.PI * 2); lctx.fill();
         }
     }
-    function drawLogoFade(){
-        var g=lctx.createLinearGradient(0,H*0.5,0,H);
-        g.addColorStop(0,'rgba(7,26,56,0)'); g.addColorStop(1,'rgba(7,26,56,1)');
-        lctx.fillStyle=g; lctx.fillRect(0,H*0.5,W,H*0.5);
+    function drawLogoFade() {
+        var g = lctx.createLinearGradient(0, H * 0.5, 0, H);
+        g.addColorStop(0, 'rgba(7,26,56,0)'); g.addColorStop(1, 'rgba(7,26,56,1)');
+        lctx.fillStyle = g; lctx.fillRect(0, H * 0.5, W, H * 0.5);
     }
-    function animLogo(){
-        lctx.clearRect(0,0,W,H);
+    function animLogo() {
+        lctx.clearRect(0, 0, W, H);
         drawLogoBg();
-        drawLogoMtn(W*0.7,H*0.325,W*0.14,W*1.49,'#12438C','#0A2554');
-        drawLogoMtn(W*0.35,H*0.275,-W*0.375,W*0.94,'#1E63C2','#123D78');
+        drawLogoMtn(W * 0.7, H * 0.325, W * 0.14, W * 1.49, '#12438C', '#0A2554');
+        drawLogoMtn(W * 0.35, H * 0.275, -W * 0.375, W * 0.94, '#1E63C2', '#123D78');
         drawLogoFade(); drawLogoAC();
-        logoTime+=0.016; requestAnimationFrame(animLogo);
+        logoTime += 0.016; requestAnimationFrame(animLogo);
     }
     animLogo();
 })();
@@ -792,99 +792,99 @@ class HeroCanvas {
 // ============================================================
 //  4. REVEAL + COUNTERS
 // ============================================================
-function animateValue(el,start,end,duration){
-    var startTs=null, suffix=el.dataset.suffix||'';
-    function step(ts){
-        if(!startTs) startTs=ts;
-        var p=Math.min((ts-startTs)/duration,1), e=p*(2-p);
-        el.textContent=Math.floor(e*(end-start)+start)+suffix;
-        if(p<1) requestAnimationFrame(step);
+function animateValue(el, start, end, duration) {
+    var startTs = null, suffix = el.dataset.suffix || '';
+    function step(ts) {
+        if (!startTs) startTs = ts;
+        var p = Math.min((ts - startTs) / duration, 1), e = p * (2 - p);
+        el.textContent = Math.floor(e * (end - start) + start) + suffix;
+        if (p < 1) requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
 }
-function initReveal(){
-    var els=document.querySelectorAll('.reveal');
-    var obs=new IntersectionObserver(function(entries,ob){
-        entries.forEach(function(entry){
-            if(!entry.isIntersecting) return;
+function initReveal() {
+    var els = document.querySelectorAll('.reveal');
+    var obs = new IntersectionObserver(function (entries, ob) {
+        entries.forEach(function (entry) {
+            if (!entry.isIntersecting) return;
             entry.target.classList.add('active');
-            var stat=entry.target.querySelector('.stat-number');
-            if(stat&&!stat.dataset.animated){
-                stat.dataset.animated='true';
-                animateValue(stat,0,parseInt(stat.dataset.target,10),2000);
+            var stat = entry.target.querySelector('.stat-number');
+            if (stat && !stat.dataset.animated) {
+                stat.dataset.animated = 'true';
+                animateValue(stat, 0, parseInt(stat.dataset.target, 10), 2000);
             }
-            setTimeout(function(){entry.target.style.willChange='auto';},1000);
+            setTimeout(function () { entry.target.style.willChange = 'auto'; }, 1000);
             ob.unobserve(entry.target);
         });
-    },{threshold:0.1});
-    els.forEach(function(el){obs.observe(el);});
+    }, { threshold: 0.1 });
+    els.forEach(function (el) { obs.observe(el); });
 }
 
 // ============================================================
 //  5. PILL
 // ============================================================
-(function(){
-    var btns=document.querySelectorAll('.contact-btn');
-    function closeAll(){
-        btns.forEach(function(b){
-            var p=document.getElementById(b.getAttribute('data-pill'));
-            if(p){p.classList.remove('open');b.classList.remove('hidden');}
+(function () {
+    var btns = document.querySelectorAll('.contact-btn');
+    function closeAll() {
+        btns.forEach(function (b) {
+            var p = document.getElementById(b.getAttribute('data-pill'));
+            if (p) { p.classList.remove('open'); b.classList.remove('hidden'); }
         });
     }
-    btns.forEach(function(btn){
-        var pill=document.getElementById(btn.getAttribute('data-pill'));
-        if(!pill) return;
-        btn.addEventListener('click',function(e){
+    btns.forEach(function (btn) {
+        var pill = document.getElementById(btn.getAttribute('data-pill'));
+        if (!pill) return;
+        btn.addEventListener('click', function (e) {
             e.stopPropagation();
-            var open=pill.classList.contains('open');
+            var open = pill.classList.contains('open');
             closeAll();
-            if(!open){pill.classList.add('open');btn.classList.add('hidden');}
+            if (!open) { pill.classList.add('open'); btn.classList.add('hidden'); }
         });
-        pill.addEventListener('click',function(e){e.stopPropagation();});
+        pill.addEventListener('click', function (e) { e.stopPropagation(); });
     });
-    document.addEventListener('click',closeAll);
+    document.addEventListener('click', closeAll);
 })();
 
 // ============================================================
 //  6. «ЕЩЁ УСЛУГИ» — toggle
 // ============================================================
-(function(){
-    var toggle=document.getElementById('moreToggle');
-    var body=document.getElementById('moreBody');
-    var label=document.getElementById('moreLabel');
-    if(!toggle||!body) return;
-    toggle.addEventListener('click',function(){
-        var open=body.classList.contains('open');
-        body.classList.toggle('open',!open);
-        if(label) label.textContent=open?'Ещё услуги':'Скрыть';
+(function () {
+    var toggle = document.getElementById('moreToggle');
+    var body = document.getElementById('moreBody');
+    var label = document.getElementById('moreLabel');
+    if (!toggle || !body) return;
+    toggle.addEventListener('click', function () {
+        var open = body.classList.contains('open');
+        body.classList.toggle('open', !open);
+        if (label) label.textContent = open ? 'Ещё услуги' : 'Скрыть';
     });
 })();
 
 // ============================================================
 //  7. FAQ — accordion cards
 // ============================================================
-(function(){
-    var toggles=document.querySelectorAll('#faq .faq-toggle');
-    if(!toggles.length) return;
+(function () {
+    var toggles = document.querySelectorAll('#faq .faq-toggle');
+    if (!toggles.length) return;
 
-    function setCardState(card,open){
-        if(!card) return;
-        card.classList.toggle('open',open);
-        var btn=card.querySelector('.faq-toggle');
-        if(btn) btn.setAttribute('aria-expanded',open?'true':'false');
+    function setCardState(card, open) {
+        if (!card) return;
+        card.classList.toggle('open', open);
+        var btn = card.querySelector('.faq-toggle');
+        if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
 
-    toggles.forEach(function(btn){
-        btn.addEventListener('click',function(){
-            var card=btn.closest('.faq-card');
-            var shouldOpen=card && !card.classList.contains('open');
+    toggles.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var card = btn.closest('.faq-card');
+            var shouldOpen = card && !card.classList.contains('open');
 
-            toggles.forEach(function(otherBtn){
-                setCardState(otherBtn.closest('.faq-card'),false);
+            toggles.forEach(function (otherBtn) {
+                setCardState(otherBtn.closest('.faq-card'), false);
             });
 
-            if(shouldOpen){
-                setCardState(card,true);
+            if (shouldOpen) {
+                setCardState(card, true);
             }
         });
     });
@@ -893,44 +893,371 @@ function initReveal(){
 // ============================================================
 //  8. RAF LOOP
 // ============================================================
-function renderLoop(time){
-    var dt=time-lastTime; lastTime=time;
-    if(dt>100) dt=16.6;
-    if(heroCanvas) heroCanvas.animate(dt);
-    rafId=requestAnimationFrame(renderLoop);
+function renderLoop(time) {
+    var dt = time - lastTime; lastTime = time;
+    if (dt > 100) dt = 16.6;
+    if (heroCanvas) heroCanvas.animate(dt);
+    rafId = requestAnimationFrame(renderLoop);
 }
 
-document.addEventListener('visibilitychange',function(){
-    if(document.hidden) cancelAnimationFrame(rafId);
-    else{lastTime=performance.now(); rafId=requestAnimationFrame(renderLoop);}
+document.addEventListener('visibilitychange', function () {
+    if (document.hidden) cancelAnimationFrame(rafId);
+    else { lastTime = performance.now(); rafId = requestAnimationFrame(renderLoop); }
 });
 
 var resizeTimer;
-window.addEventListener('resize',function(){
+window.addEventListener('resize', function () {
     clearTimeout(resizeTimer);
-    resizeTimer=setTimeout(function(){
-        if(!heroCanvas) return;
+    resizeTimer = setTimeout(function () {
+        if (!heroCanvas) return;
         /* Ignore mobile browser chrome height jumps; repaint on real layout width change. */
-        if(window.innerWidth !== lastHeroViewportWidth){
+        if (window.innerWidth !== lastHeroViewportWidth) {
             lastHeroViewportWidth = window.innerWidth;
             heroCanvas.resize();
         }
-    },220);
-},{passive:true});
+    }, 220);
+}, { passive: true });
 
 // INIT
-heroCanvas=new HeroCanvas();
+heroCanvas = new HeroCanvas();
 heroCanvas.resize();
-rafId=requestAnimationFrame(renderLoop);
+rafId = requestAnimationFrame(renderLoop);
 initReveal();
 
 /* Pause ribbons when hero off screen */
-(function(){
-    if(!heroCanvas||!heroCanvas.canvas) return;
-    var obs=new IntersectionObserver(function(entries){
-        heroCanvas.heroVisible=entries[0].isIntersecting;
-    },{threshold:0.05});
+(function () {
+    if (!heroCanvas || !heroCanvas.canvas) return;
+    var obs = new IntersectionObserver(function (entries) {
+        heroCanvas.heroVisible = entries[0].isIntersecting;
+    }, { threshold: 0.05 });
     obs.observe(heroCanvas.section);
 })();
 
+// ============================================================
+//  9. SECTION CANVAS BACKGROUNDS
+// ============================================================
+(function () {
+    var canvasConfigs = [
+        { id: 'services-canvas', type: 'snowflakes' },
+        { id: 'extra-canvas', type: 'circuit' },
+        { id: 'faq-canvas', type: 'dots' },
+        { id: 'reviews-canvas', type: 'hearts' }
+    ];
 
+    function SectionBgCanvas(cfg) {
+        this.canvas = document.getElementById(cfg.id);
+        if (!this.canvas) return;
+        this.ctx = this.canvas.getContext('2d');
+        this.type = cfg.type;
+        this.particles = [];
+        this.w = 0; this.h = 0;
+        this.time = 0;
+        this.visible = false;
+        this.animId = null;
+        this.init();
+    }
+
+    SectionBgCanvas.prototype.init = function () {
+        var self = this;
+        this.resize();
+        window.addEventListener('resize', function () { self.resize(); });
+        var obs = new IntersectionObserver(function (entries) {
+            self.visible = entries[0].isIntersecting;
+            if (self.visible && !self.animId) self.loop();
+        }, { threshold: 0.01 });
+        obs.observe(self.canvas.parentElement);
+    };
+
+    SectionBgCanvas.prototype.resize = function () {
+        var sec = this.canvas.parentElement;
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        this.w = sec.offsetWidth;
+        this.h = sec.offsetHeight;
+        this.canvas.width = this.w * dpr;
+        this.canvas.height = this.h * dpr;
+        this.canvas.style.width = this.w + 'px';
+        this.canvas.style.height = this.h + 'px';
+        this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        this.createParticles();
+    };
+
+    SectionBgCanvas.prototype.createParticles = function () {
+        this.particles = [];
+        var count = Math.min(Math.floor(this.w * this.h / 18000), 40);
+        for (var i = 0; i < count; i++) {
+            this.particles.push({
+                x: Math.random() * this.w,
+                y: Math.random() * this.h,
+                size: 1.5 + Math.random() * 3,
+                speed: 0.15 + Math.random() * 0.4,
+                drift: (Math.random() - 0.5) * 0.3,
+                phase: Math.random() * Math.PI * 2,
+                opacity: 0.15 + Math.random() * 0.35
+            });
+        }
+    };
+
+    SectionBgCanvas.prototype.loop = function () {
+        if (!this.visible) { this.animId = null; return; }
+        var self = this;
+        this.animId = requestAnimationFrame(function () { self.loop(); });
+        this.time += 0.016;
+        this.draw();
+    };
+
+    SectionBgCanvas.prototype.draw = function () {
+        var ctx = this.ctx, w = this.w, h = this.h, t = this.time;
+        ctx.clearRect(0, 0, w, h);
+
+        for (var i = 0; i < this.particles.length; i++) {
+            var p = this.particles[i];
+
+            if (this.type === 'snowflakes') {
+                p.y += p.speed;
+                p.x += Math.sin(t * 0.8 + p.phase) * 0.4 + p.drift;
+                if (p.y > h + 10) { p.y = -10; p.x = Math.random() * w; }
+                if (p.x > w + 10) p.x = -10;
+                if (p.x < -10) p.x = w + 10;
+                ctx.save();
+                ctx.globalAlpha = p.opacity;
+                ctx.translate(p.x, p.y);
+                ctx.rotate(t * 0.3 + p.phase);
+                ctx.strokeStyle = 'rgba(168,212,245,0.7)';
+                ctx.lineWidth = Math.max(0.3, p.size * 0.2);
+                ctx.lineCap = 'round';
+                var arm = p.size * 1.5;
+                for (var a = 0; a < 6; a++) {
+                    ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(arm, 0);
+                    if (p.size > 2.5) {
+                        ctx.moveTo(arm * 0.5, 0); ctx.lineTo(arm * 0.65, -arm * 0.2);
+                        ctx.moveTo(arm * 0.5, 0); ctx.lineTo(arm * 0.65, arm * 0.2);
+                    }
+                    ctx.stroke(); ctx.rotate(Math.PI / 3);
+                }
+                ctx.restore();
+
+            } else if (this.type === 'circuit') {
+                p.x += p.drift * 0.5;
+                p.y += p.speed * 0.3;
+                if (p.y > h + 10) { p.y = -10; p.x = Math.random() * w; }
+                if (p.x > w + 10) p.x = -10;
+                if (p.x < -10) p.x = w + 10;
+                var pulse = 0.5 + 0.5 * Math.sin(t * 1.2 + p.phase);
+                ctx.save();
+                ctx.globalAlpha = p.opacity * (0.4 + pulse * 0.6);
+                ctx.fillStyle = 'rgba(77,168,240,0.6)';
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size * 0.8, 0, Math.PI * 2); ctx.fill();
+                if (i < this.particles.length - 1) {
+                    var p2 = this.particles[i + 1];
+                    var dx = p2.x - p.x, dy = p2.y - p.y, dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 120) {
+                        ctx.strokeStyle = 'rgba(77,168,240,' + (0.12 * (1 - dist / 120)) + ')';
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+                    }
+                }
+                ctx.restore();
+
+            } else if (this.type === 'dots') {
+                var fy = Math.sin(t * 0.5 + p.phase) * 15;
+                var fx = Math.cos(t * 0.3 + p.phase * 1.5) * 10;
+                var px2 = p.x + fx, py2 = p.y + fy;
+                var pulse2 = 0.5 + 0.5 * Math.sin(t * 0.7 + p.phase);
+                ctx.save();
+                ctx.globalAlpha = p.opacity * (0.3 + pulse2 * 0.7);
+                var gr = ctx.createRadialGradient(px2, py2, 0, px2, py2, p.size * 3);
+                gr.addColorStop(0, 'rgba(77,168,240,0.25)');
+                gr.addColorStop(1, 'rgba(77,168,240,0)');
+                ctx.fillStyle = gr;
+                ctx.beginPath(); ctx.arc(px2, py2, p.size * 3, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = 'rgba(168,212,245,0.6)';
+                ctx.beginPath(); ctx.arc(px2, py2, p.size * 0.6, 0, Math.PI * 2); ctx.fill();
+                ctx.restore();
+
+            } else if (this.type === 'sparkles') {
+                p.y -= p.speed * 0.8;
+                p.x += Math.sin(t * 0.4 + p.phase) * 0.3;
+                if (p.y < -10) { p.y = h + 10; p.x = Math.random() * w; }
+                var twinkle = 0.5 + 0.5 * Math.sin(t * 2 + p.phase);
+                ctx.save();
+                ctx.globalAlpha = p.opacity * twinkle;
+                ctx.translate(p.x, p.y);
+                ctx.rotate(t * 0.5 + p.phase);
+                ctx.fillStyle = 'rgba(168,212,245,0.7)';
+                var sLen = p.size * 1.8, sThin = p.size * 0.3;
+                ctx.beginPath();
+                ctx.moveTo(0, -sLen); ctx.lineTo(sThin, 0); ctx.lineTo(0, sLen); ctx.lineTo(-sThin, 0);
+                ctx.closePath(); ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(-sLen, 0); ctx.lineTo(0, sThin); ctx.lineTo(sLen, 0); ctx.lineTo(0, -sThin);
+                ctx.closePath(); ctx.fill();
+                ctx.restore();
+
+            } else if (this.type === 'hearts') {
+                p.y -= p.speed * 0.5;
+                p.x += Math.sin(t * 0.6 + p.phase) * 0.4;
+                if (p.y < -20) { p.y = h + 20; p.x = Math.random() * w; }
+                var fade = 0.5 + 0.5 * Math.sin(t * 0.8 + p.phase);
+                ctx.save();
+                ctx.globalAlpha = p.opacity * fade;
+                ctx.translate(p.x, p.y);
+                ctx.scale(p.size * 0.22, p.size * 0.22);
+                if (i % 3 === 0) {
+                    ctx.fillStyle = 'rgba(245,197,66,0.5)';
+                    ctx.beginPath();
+                    for (var si = 0; si < 5; si++) {
+                        var ang = si * Math.PI * 2 / 5 - Math.PI / 2;
+                        var ang2 = ang + Math.PI / 5;
+                        ctx.lineTo(Math.cos(ang) * 6, Math.sin(ang) * 6);
+                        ctx.lineTo(Math.cos(ang2) * 2.5, Math.sin(ang2) * 2.5);
+                    }
+                    ctx.closePath(); ctx.fill();
+                } else {
+                    ctx.fillStyle = 'rgba(168,212,245,0.5)';
+                    ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2); ctx.fill();
+                }
+                ctx.restore();
+            }
+        }
+    };
+
+    canvasConfigs.forEach(function (cfg) { new SectionBgCanvas(cfg); });
+})();
+
+// ============================================================
+//  10. REVIEWS — Load, Display, Submit
+// ============================================================
+(function () {
+    var reviewsSwiper = null;
+    var currentRating = 5;
+
+    var starsContainer = document.getElementById('review-stars');
+    if (starsContainer) {
+        var starBtns = starsContainer.querySelectorAll('.review-star');
+        starBtns.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                currentRating = parseInt(btn.getAttribute('data-star'));
+                starBtns.forEach(function (s) {
+                    var v = parseInt(s.getAttribute('data-star'));
+                    if (v <= currentRating) {
+                        s.classList.add('active');
+                        s.innerHTML = '<svg width="22" height="22"><use href="#i-star"/></svg>';
+                    } else {
+                        s.classList.remove('active');
+                        s.innerHTML = '<svg width="22" height="22"><use href="#i-star-empty"/></svg>';
+                    }
+                });
+            });
+        });
+    }
+
+    function formatDate(iso) {
+        try { var d = new Date(iso); return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }); }
+        catch (e) { return ''; }
+    }
+
+    function makeStarsHTML(rating) {
+        var html = '';
+        for (var i = 1; i <= 5; i++) html += '<svg width="16" height="16"><use href="#i-star' + (i <= rating ? '' : '-empty') + '"/></svg>';
+        return html;
+    }
+
+    function esc(s) { return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+    function renderReviews(reviews) {
+        var wrapper = document.getElementById('reviews-slides');
+        var emptyEl = document.getElementById('reviews-empty');
+        if (!wrapper) return;
+        wrapper.innerHTML = '';
+        if (!reviews || reviews.length === 0) { if (emptyEl) emptyEl.style.display = 'block'; return; }
+        if (emptyEl) emptyEl.style.display = 'none';
+
+        reviews.forEach(function (r) {
+            var slide = document.createElement('div');
+            slide.className = 'swiper-slide';
+            slide.innerHTML =
+                '<div class="review-card">' +
+                '<div class="review-card-header">' +
+                '<div class="review-card-avatar" aria-hidden="true"><svg width="20" height="20"><use href="#i-user"/></svg></div>' +
+                '<div class="review-card-info">' +
+                '<span class="review-card-author">' + esc(r.author_name) + '</span>' +
+                '<span class="review-card-date">' + formatDate(r.created_at) + '</span>' +
+                '</div>' +
+                '</div>' +
+                '<div class="review-card-stars">' + makeStarsHTML(r.rating || 5) + '</div>' +
+                '<div class="review-card-body">' + esc(r.body) + '</div>' +
+                '</div>';
+            wrapper.appendChild(slide);
+        });
+
+        if (reviewsSwiper) reviewsSwiper.destroy(true, true);
+        reviewsSwiper = new Swiper('#reviews-swiper', {
+            slidesPerView: 1, spaceBetween: 20, grabCursor: true,
+            pagination: { el: '.reviews-pagination', clickable: true },
+            navigation: { nextEl: '.reviews-next', prevEl: '.reviews-prev' },
+            breakpoints: { 640: { slidesPerView: 2 }, 1024: { slidesPerView: 3 } }
+        });
+    }
+
+    function loadReviews() {
+        if (typeof sb === 'undefined') return;
+        sb.rpc('get_approved_reviews').then(function (res) {
+            if (res.error) {
+                sb.from('reviews').select('*').eq('is_approved', true).order('created_at', { ascending: false }).limit(50).then(function (r2) {
+                    renderReviews(r2.data || []);
+                });
+                return;
+            }
+            renderReviews(res.data || []);
+        });
+    }
+
+    var submitBtn = document.getElementById('review-submit-btn');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', function () {
+            var nameEl = document.getElementById('review-name');
+            var phoneEl = document.getElementById('review-phone');
+            var bodyEl = document.getElementById('review-body');
+            var name = (nameEl ? nameEl.value : '').trim();
+            var phone = (phoneEl ? phoneEl.value : '').trim();
+            var body = (bodyEl ? bodyEl.value : '').trim();
+
+            if (!name || !phone || !body) {
+                if (typeof showAlert === 'function') showAlert('Заполните имя, телефон и текст отзыва.');
+                else alert('Заполните имя, телефон и текст отзыва.');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Отправляем...';
+
+            sb.rpc('submit_review', { p_name: name, p_phone: phone, p_body: body, p_rating: currentRating }).then(function (res) {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Отправить отзыв';
+
+                if (res.error) {
+                    sb.from('reviews').insert({ author_name: name, phone: phone, body: body, rating: currentRating, is_approved: false }).then(function (r2) {
+                        if (r2.error) {
+                            if (typeof showAlert === 'function') showAlert('Ошибка: ' + r2.error.message);
+                            else alert('Ошибка: ' + r2.error.message);
+                            return;
+                        }
+                        if (nameEl) nameEl.value = '';
+                        if (phoneEl) phoneEl.value = '';
+                        if (bodyEl) bodyEl.value = '';
+                        if (typeof showAlert === 'function') showAlert('Спасибо за отзыв!');
+                        else alert('Спасибо за отзыв!');
+                    });
+                    return;
+                }
+
+                if (nameEl) nameEl.value = '';
+                if (phoneEl) phoneEl.value = '';
+                if (bodyEl) bodyEl.value = '';
+                if (typeof showAlert === 'function') showAlert('Спасибо за отзыв!');
+                else alert('Спасибо за отзыв!');
+            });
+        });
+    }
+    loadReviews();
+})();

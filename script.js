@@ -1178,11 +1178,8 @@ initReveal();
             slide.innerHTML =
                 '<div class="review-card">' +
                 '<div class="review-card-header">' +
-                '<div class="review-card-avatar" aria-hidden="true"><svg width="20" height="20"><use href="#i-user"/></svg></div>' +
-                '<div class="review-card-info">' +
                 '<span class="review-card-author">' + esc(r.author_name) + '</span>' +
                 '<span class="review-card-date">' + formatDate(r.created_at) + '</span>' +
-                '</div>' +
                 '</div>' +
                 '<div class="review-card-stars">' + makeStarsHTML(r.rating || 5) + '</div>' +
                 '<div class="review-card-body">' + esc(r.body) + '</div>' +
